@@ -109,6 +109,8 @@ textarea{width:100%;min-height:5rem;padding:.75rem;border-radius:.8rem;border:2p
 .feedback{border-radius:1rem;padding:1rem 1.1rem;margin:1rem 0}
 .feedback.ok{background:var(--solid-soft)}
 .feedback.no{background:var(--gap-soft)}
+.bridge{margin-top:.75rem;padding:.7rem .85rem;border-radius:.7rem;background:var(--hi);color:var(--hi-ink)}
+.bridge .lab{font-size:.85rem;opacity:.75;margin-bottom:.15rem}
 .big-win{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1.1;margin:1rem 0 .5rem}
 @media (prefers-reduced-motion:no-preference){
   .pop{animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
@@ -311,6 +313,177 @@ const G = {
   },
 };
 
+
+/* ---------- interest pack: dogs ----------
+   Same math, same misconception-tagged wrong answers, set in a dog-owner's world.
+   Each problem also carries `bare`: the plain math underneath, shown as the bridge. */
+const sMoney = n => (n < 0 ? MINUS : "") + money(Math.abs(n));
+function withBare(p, bare){ if (p) p.bare = bare; return p; }
+const DOGNAMES = ["Max","Bella","Luna","Rocky","Daisy","Bear","Pip","Moss","Ziggy","Nala","Biscuit","Juno"];
+function names(n){ return shuffle(DOGNAMES).slice(0, n); }
+
+const DOG = {
+  A1(){
+    const [d1, d2, d3] = names(3), a = R(8, 40), b = R(8, 40), c = R(3, 12), ans = a + b - c;
+    if (ans < 5) return null;
+    return withBare(build(`${d1} (${a} lb) and ${d2} (${b} lb) stand on one side of a balance scale. ${d3} and a ${c} lb crate are on the other side, and it balances. How much does ${d3} weigh?`, ans + " lb",
+      [[(a + b) + " lb", "EQUALS_ANSWER"], [(a + b + c) + " lb", "EQUALS_ANSWER"]],
+      `Balanced means both sides weigh the same: ${a + b} lb. So ${d3} + ${c} = ${a + b}, which makes ${d3} ${ans} lb.`),
+      `${a} + ${b} = ☐ + ${c}   →   ☐ = ${ans}`);
+  },
+  A2(){
+    const a = R(2, 6), x = R(2, 9), b = R(3, 15), c = a * x + b, [d] = names(1);
+    const walk = Math.random() < .5;
+    const q = walk
+      ? `You charge $${a} per dog walk plus a one-time $${b} sign-up fee. A client paid $${c} in total. How many walks?`
+      : `${d} the puppy weighs ${b} lb and gains ${a} lb a week. In how many weeks will ${d} weigh ${c} lb?`;
+    const u = walk ? " walks" : " weeks";
+    return withBare(build(q, x + u,
+      [[frac(c + b, a) + u, "SIGN_MOVE"], [(c - b) * a + u, "INVERSE_OPS"], [(c - b) + u, "INVERSE_OPS"]],
+      walk ? `Take off the $${b} fee: $${c - b} is for walks. At $${a} each, that's ${c - b} ÷ ${a} = ${x} walks.`
+           : `${d} needs to gain ${c} − ${b} = ${c - b} lb. At ${a} lb a week, that's ${c - b} ÷ ${a} = ${x} weeks.`),
+      `${a}x + ${b} = ${c}   →   x = ${x}`);
+  },
+  A3(){
+    const [d1, d2] = names(2), c = R(1, 3), k = R(1, 3), a = c + k, x = R(2, 10), b = R(3, 12), d = b + k * x;
+    return withBare(build(`${d1} weighs ${b} lb and gains ${a} lb a week. ${d2} weighs ${d} lb and gains ${c} lb a week. After how many weeks will they weigh the same?`, x + " weeks",
+      [[frac(d + b, k) + " weeks", "SIGN_MOVE"], [frac(d - b, a + c) + " weeks", "SIGN_MOVE"], [num(-x) + " weeks", "NEG_RULES"]],
+      `${d1} starts ${d - b} lb behind but catches up ${a} − ${c} = ${k} lb a week. ${d - b} ÷ ${k} = ${x} weeks.`),
+      `${a}w + ${b} = ${c}w + ${d}   →   w = ${x}`);
+  },
+  B1(){
+    const p = pick([2,3,4]), k = pick([2,3]), q = p * k, a = R(1, p - 1), b = R(1, q - 1);
+    if (gcd(a, p) !== 1 || gcd(b, q) !== 1) return null;
+    const [d] = names(1), ans = frac(a * k + b, q);
+    return withBare(build(`${d} gets ${a}/${p} cup of food in the morning and ${b}/${q} cup at night. How much food is that a day?`, ans + " cup",
+      [[frac(a + b, p + q) + " cup", "ADD_ACROSS"], [frac(a + b, q) + " cup", "NO_SCALE"], [frac(a * b, p * q) + " cup", "ADD_ACROSS"]],
+      `${a}/${p} cup is the same as ${a * k}/${q} cup. ${a * k}/${q} + ${b}/${q} = ${a * k + b}/${q}${ans !== (a * k + b) + "/" + q ? " = " + ans : ""} cup.`),
+      `${a}/${p} + ${b}/${q} = ${ans}`);
+  },
+  B2(){
+    const b = R(3, 9), d = R(b + 1, 12), a = R(1, b - 1), c = R(a + 1, d - 1);
+    if (gcd(a, b) !== 1 || gcd(c, d) !== 1 || a * d === b * c || c / d >= a / b) return null;
+    const big = `${a}/${b}`, small = `${c}/${d}`, askBig = Math.random() < .6;
+    return withBare(build(`You have two food scoops: one holds ${shuffle([big + " cup", small + " cup"]).join(", the other ")}. Which scoop holds ${askBig ? "more" : "less"}?`, (askBig ? big : small) + " cup",
+      [[(askBig ? small : big) + " cup", "WHOLE_NUMBER_FRAC"], ["They hold the same", "WHOLE_NUMBER_FRAC"]],
+      `${big} ≈ ${dec(a / b)} cup and ${small} ≈ ${dec(c / d)} cup, so the ${big} scoop holds more. Cutting a cup into ${d} pieces makes smaller pieces than cutting it into ${b}.`),
+      `${big} > ${small}`);
+  },
+  B3(){
+    const b = R(3, 8), d = R(3, 8);
+    if (b === d || b % d === 0 || d % b === 0) return null;
+    const a = R(1, b - 1), c = R(1, d - 1);
+    if (gcd(a, b) !== 1 || gcd(c, d) !== 1) return null;
+    const L = lcm(b, d), A = a * L / b, C = c * L / d, ans = frac(A + C, L), [dn] = names(1);
+    return withBare(build(`${dn}'s dinner is ${a}/${b} cup of kibble mixed with ${c}/${d} cup of wet food. How much food in the bowl?`, ans + " cup",
+      [[frac(a + c, b + d) + " cup", "ADD_ACROSS"], [frac(a + c, L) + " cup", "NO_SCALE"], [frac(a * c, b * d) + " cup", "ADD_ACROSS"]],
+      `Cut both into ${L}ths of a cup: ${a}/${b} = ${A}/${L} and ${c}/${d} = ${C}/${L}. Together: ${A + C}/${L}${ans !== (A + C) + "/" + L ? " = " + ans : ""} cup.`),
+      `${a}/${b} + ${c}/${d} = ${ans}`);
+  },
+  C1(){
+    const r = R(4, 12) * 5, h = R(2, 7), D = r * h, [d] = names(1);
+    return withBare(build(`You walked ${d} for ${D} minutes in total over ${h} days, the same amount each day. How many minutes a day?`, r + " minutes",
+      [[(D - (h - 1)) + " minutes", "ADDITIVE_RATIO"], [(D * h) + " minutes", "RATIO_FLIP"], [(D - h) + " minutes", "ADDITIVE_RATIO"]],
+      `Share ${D} minutes evenly over ${h} days: ${D} ÷ ${h} = ${r} minutes a day.`),
+      `${D} ÷ ${h} = ${r}`);
+  },
+  C2(){
+    const item = pick(["chew sticks","tennis balls","rolls of poop bags","training treats bags"]);
+    const u = pick([0.5, 0.75, 1.25, 1.5, 2, 2.5, 3, 4]), n = R(3, 10), m = R(2, 12);
+    if (m === n) return null;
+    const P = u * n, ans = u * m;
+    if (P + (m - n) <= 0) return null;
+    return withBare(build(`${n} ${item} cost ${money(P)}. What do ${m} cost?`, money(ans),
+      [[money(P + (m - n)), "ADDITIVE_RATIO"], [money(Math.round(n * m / P * 100) / 100), "RATIO_FLIP"], [money(u), "UNIT_RATE"]],
+      `One costs ${money(P)} ÷ ${n} = ${money(u)}. So ${m} cost ${m} × ${money(u)} = ${money(ans)}.`),
+      `${money(P)} ÷ ${n} × ${m} = ${money(ans)}`);
+  },
+  C3(){
+    const a = R(2, 6), p = R(2, 8), q = R(p + 1, p * 4);
+    if ((2 * a * q) % p !== 0 || (a * q) % p === 0 && q % p === 0) return null;
+    const ans = a * q / p;
+    return withBare(build(`At the shelter, ${a} cups of food feeds ${p} puppies one meal. How much for ${q} puppies?`, dec(ans) + " cups",
+      [[num(a + q - p) + " cups", "ADDITIVE_RATIO"], [approx(p * q / a) + " cups", "RATIO_FLIP"], [num(a * q) + " cups", "UNIT_RATE"]],
+      `Each puppy gets ${a} ÷ ${p} cup. For ${q} puppies: ${q} × ${a} ÷ ${p} = ${dec(ans)} cups.`),
+      `${a}/${p} = ?/${q}   →   ? = ${dec(ans)}`);
+  },
+  D1(){
+    const m = R(1, 20), n = R(1, 20); if (m === n) return null;
+    const lo = Math.min(-m, -n), hi = Math.max(-m, -n), colder = Math.random() < .6;
+    return withBare(build(`Winter dog walks: one morning it was ${num(-m)}°F, another morning ${num(-n)}°F. Which morning was ${colder ? "colder" : "warmer"}?`, num(colder ? lo : hi) + "°F",
+      [[num(colder ? hi : lo) + "°F", "NEG_ORDER"], ["Same temperature", "NEG_ORDER"]],
+      `${num(lo)}° is further below zero, so it's colder. On the number line it's further left: ${num(lo)} < ${num(hi)}.`),
+      `${num(lo)} < ${num(hi)}`);
+  },
+  D2(){
+    const a = pick([R(-30, -1), R(1, 30)]), b = R(2, 25), ans = a + b;
+    return withBare(build(`Your dog-walking account shows ${sMoney(a)}. The bank removes a wrong charge of ${sMoney(-b)}. What's the balance now?`, sMoney(ans),
+      [[sMoney(a - b), "NEG_SUBTRACT"], [sMoney(-(a + b)), "NEG_RULES"], [sMoney(b - a), "NEG_RULES"]],
+      `Removing a −$${b} charge gives you $${b} back: ${sMoney(a)} + $${b} = ${sMoney(ans)}.`),
+      `${num(a)} − (${num(-b)}) = ${num(a)} + ${b} = ${num(ans)}`);
+  },
+  D3(){
+    const k = R(2, 6), m = R(2, 8), sign = pick([1, -1]);
+    const price = sign > 0 ? `x + ${m}` : `x − ${m}`;
+    const why = sign > 0 ? `your base price x plus a $${m} pickup fee` : `your base price x minus a $${m} shelter discount`;
+    return withBare(build(`Each walk costs (${price}) dollars: ${why}. You refund ${k} walks. Which expression is the change in your earnings, −${k}(${price})?`, lin(-k, -k * m * sign),
+      [[lin(-k, m * sign), "DISTRIB_PARTIAL"], [lin(-k, k * m * sign), "NEG_RULES"], [lin(k, -k * m * sign), "NEG_RULES"]],
+      `Refunding means every part of every price comes back: −${k} · x = −${k}x and −${k} · ${sign > 0 ? m : "(−" + m + ")"} = ${num(-k * m * sign)}.`),
+      `−${k}(${price}) = ${lin(-k, -k * m * sign)}`);
+  },
+  E1(){
+    const a = R(3, 12), b = R(2, a - 1), minus = Math.random() < .5, c = minus ? a - b : a + b;
+    if (c === 1) return null;
+    const q = minus ? `Each walk costs w dollars. You had ${a} walks booked and ${b} cancelled. Simplify ${a}w − ${b}w to show what you earn.`
+                    : `Each walk costs w dollars. You did ${a} walks Monday and ${b} walks Tuesday. Simplify ${a}w + ${b}w to show what you earned.`;
+    return withBare(build(q, c + "w",
+      [[num(c), "VARIABLE_MEANING"], [(a * b) + "w", "VARIABLE_MEANING"], [c + "w²", "VARIABLE_MEANING"]],
+      `${a} walks ${minus ? "minus" : "plus"} ${b} walks is ${c} walks, each worth w: ${c}w.`),
+      `${a}w ${minus ? "−" : "+"} ${b}w = ${c}w`);
+  },
+  E2(){
+    const p = R(5, 15), n = R(2, 9), q = R(2, 9), plus = Math.random() < .6;
+    const ans = plus ? p * n + q : p * n - q, glued = Number(`${p}${n}`);
+    const q2 = plus ? `Group walks cost ${p}n + ${q} dollars for n dogs ($${p} per dog plus a $${q} pickup fee). What do ${n} dogs cost?`
+                    : `Group walks cost ${p}n − ${q} dollars for n dogs ($${p} per dog, minus a $${q} loyalty discount). What do ${n} dogs cost?`;
+    return withBare(build(q2, "$" + ans,
+      [["$" + (plus ? glued + q : glued - q), "VARIABLE_MEANING"], ["$" + (plus ? p + n + q : p + n - q), "VARIABLE_MEANING"]],
+      `${p}n means $${p} for each of the ${n} dogs: ${p} × ${n} = ${p * n}. Then ${plus ? "add" : "subtract"} ${q}: $${ans}.`),
+      `n = ${n}:  ${p}n ${plus ? "+" : "−"} ${q} = ${ans}`);
+  },
+  E3(){
+    const k = R(2, 6), m = R(2, 8), j = R(2, 7), sign = pick([1, -1]);
+    const price = sign > 0 ? `x + ${m}` : `x − ${m}`;
+    const why = sign > 0 ? `x dollars plus a $${m} pickup fee` : `x dollars minus a $${m} shelter discount`;
+    return withBare(build(`You walk ${k} dogs at (${price}) each (${why}) and ${j} neighbors' dogs at x each. Simplify ${k}(${price}) + ${j}x.`, lin(k + j, k * m * sign),
+      [[lin(k + j, m * sign), "DISTRIB_PARTIAL"], [lin(k + j + k * m * sign, 0), "COMBINE_UNLIKE"], [lin(k + j, k * m * sign + j), "COMBINE_UNLIKE"]],
+      `${k}(${price}) = ${lin(k, k * m * sign)}. All the x's together: ${k + j}x. The ${num(k * m * sign)} is fee money, not walks, so it stays separate.`),
+      `${k}(${price}) + ${j}x = ${lin(k + j, k * m * sign)}`);
+  },
+};
+function genFor(id, ctx){
+  const src = ctx === "dogs" && DOG[id] ? DOG : G;
+  for (let i = 0; i < 2000; i++){ const p = src[id](); if (p) return p; }
+  throw new Error("generator " + id);
+}
+const DOG_EX = {
+  EQUALS_ANSWER:"Max (12 lb) + Bella (9 lb) balance Rocky + a 5 lb crate.\nLeft side: 21 lb. So Rocky + 5 = 21 → Rocky = 16 lb.",
+  SIGN_MOVE:"Puppy's weight w plus 4 lb gained = 19 lb.\nTake 4 off both sides: w = 15 lb.",
+  INVERSE_OPS:"$8 per walk + $6 fee = $46 total.\nUndo the fee: 8w = 40. Undo the ×8: w = 5 walks.",
+  ADD_ACROSS:"1/2 cup + 1/4 cup of food.\nHalf a cup is two quarter-cups: 2/4 + 1/4 = 3/4 cup.",
+  NO_SCALE:"1/2 cup = 2/4 cup: top and bottom both ×2.\n2/4 + 1/4 = 3/4 cup.",
+  WHOLE_NUMBER_FRAC:"2/3 cup scoop vs 3/5 cup scoop.\n2/3 ≈ 0.67, 3/5 = 0.6. The 2/3 scoop holds more.",
+  ADDITIVE_RATIO:"2 cups feeds 4 puppies.\n8 puppies is twice as many → 4 cups, not 2 + 4 = 6.",
+  RATIO_FLIP:"2 cups / 4 puppies = ? cups / 10 puppies\n? = 10 × 2 ÷ 4 = 5 cups",
+  UNIT_RATE:"6 chews cost $9 → $1.50 each.\n4 chews → 4 × $1.50 = $6.",
+  NEG_ORDER:"−8°F is colder than −3°F.\nColder = further left = smaller: −8 < −3.",
+  NEG_SUBTRACT:"Balance −$5. The bank removes a −$8 charge.\n−5 − (−8) = −5 + 8 = $3.",
+  NEG_RULES:"Refund 3 walks at $4: −3 × 4 = −$12.\nCancel 3 refunds of −$4: −3 × −4 = +$12.",
+  DISTRIB_PARTIAL:"Refund 3 walks priced (x + 4):\n−3(x + 4) = −3x − 12. The fee gets refunded too.",
+  COMBINE_UNLIKE:"2 walks at (x + 3) plus 4 walks at x:\n2x + 6 + 4x = 6x + 6. The $6 of fees stays separate.",
+  VARIABLE_MEANING:"w = price of one walk.\n3w means 3 walks: 3 × w. If w = 12, then 3w + 5 = 41.",
+};
+
 const LESSON = {
   EQUALS_ANSWER:{name:"The equals sign", rule:"“=” means “now write the answer.”", idea:"“=” means both sides are worth the same amount. It's a balance, not an arrow.", ex:"8 + 4 = ☐ + 5\nLeft side is 12, so the right side must be 12 too. ☐ = 7."},
   SIGN_MOVE:{name:"Moving things across the =", rule:"Move a number to the other side and keep its sign.", idea:"Nothing actually moves. You do the same thing to both sides. To get rid of +5, subtract 5 from both sides, which is why it shows up as −5.", ex:"x + 5 = 2\nx + 5 − 5 = 2 − 5\nx = −3"},
@@ -331,9 +504,9 @@ const LESSON = {
 const DEFAULT_TAG = {A1:"EQUALS_ANSWER",A2:"INVERSE_OPS",A3:"SIGN_MOVE",B1:"ADD_ACROSS",B2:"WHOLE_NUMBER_FRAC",B3:"NO_SCALE",C1:"UNIT_RATE",C2:"UNIT_RATE",C3:"ADDITIVE_RATIO",D1:"NEG_ORDER",D2:"NEG_SUBTRACT",D3:"DISTRIB_PARTIAL",E1:"VARIABLE_MEANING",E2:"VARIABLE_MEANING",E3:"COMBINE_UNLIKE"};
 
 /* ---------- state ---------- */
-const KEY = "missing-piece-v2";
+const KEY = "missing-piece-v3";
 let S = load() || fresh();
-function fresh(){ return {phase:"intro", si:0, level:3, tally:[], cur:null, log:[], results:{}, fixed:{}}; }
+function fresh(interest){ return {interest: interest || "plain", phase:"intro", si:0, level:3, tally:[], cur:null, log:[], results:{}, fixed:{}}; }
 function load(){ try{ const r = localStorage.getItem(KEY); return r ? JSON.parse(r) : null; }catch(e){ return null; } }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
 
@@ -382,6 +555,12 @@ function viewIntro(){
     <li>Nothing is graded and nobody else sees it.</li>
     <li>“Not sure” is a real answer. Guessing just makes the map less accurate.</li>
   </ul>
+  <h3 style="margin:1.5rem 0 .6rem">Pick your setting</h3>
+  <div class="opts" role="group" aria-label="Setting">
+    <button class="opt" aria-pressed="${S.interest === "dogs"}" data-act="interest" data-v="dogs"><span class="dot"></span><span>🐶 Dogs <span class="small muted">— feeding, walks, puppies, money</span></span></button>
+    <button class="opt" aria-pressed="${S.interest !== "dogs"}" data-act="interest" data-v="plain"><span class="dot"></span><span>Just numbers</span></button>
+  </div>
+  <p class="small muted">Same math either way. More settings coming.</p>
   <button class="btn" data-act="start">Start</button>`;
 }
 
@@ -447,11 +626,12 @@ function viewFix(){
     <div class="piece">
       <div class="row wrong"><div class="lab">The rule that's been tripping you up</div>${esc(L.rule)}</div>
       <div class="row right"><div class="lab">What's actually going on</div>${esc(L.idea)}</div>
-      <div class="row ex"><div class="lab">Example</div><div class="mono" style="white-space:pre-line">${esc(L.ex)}</div></div>
+      ${F.ctx === "dogs" ? `<div class="row right"><div class="lab">With dogs</div><div class="mono" style="white-space:pre-line">${esc(DOG_EX[F.tag])}</div></div>` : ""}
+      <div class="row ex"><div class="lab">${F.ctx === "dogs" ? "Same idea, just numbers" : "Example"}</div><div class="mono" style="white-space:pre-line">${esc(L.ex)}</div></div>
     </div>
     <button class="btn" data-act="next">Try some</button>`;
   if (F.step === "q"){
-    const label = F.payoff ? "The 9th-grade version" : `Practice: ${F.right} of 2 right so far`;
+    const label = F.payoff ? (F.ctx === "dogs" ? "Same idea, no dogs" : "The 9th-grade version") : `Practice: ${F.right} of 2 right so far`;
     return `${topbar(back)}
     <div class="qtopic">${label}</div>
     <p class="qtext">${esc(F.item.q)}</p>
@@ -461,16 +641,17 @@ function viewFix(){
   // result
   const r = F.last;
   if (F.outcome === "fixed") return `${topbar()}
-    <p class="big-win pop">That's the kind that used to get you.</p>
+    <p class="big-win pop">${F.ctx === "dogs" ? "No dogs, still got it." : "That's the kind that used to get you."}</p>
     <p>${esc(s.name)} is marked fixed. Run a fresh check in a week. The problems will be different, so if it holds up, it's locked in.</p>
     <button class="btn" data-act="tomap">Back to the map</button>`;
+  const bridge = F.item.bare ? `<div class="bridge"><div class="lab">${r.correct ? "That was just this:" : "The math underneath:"}</div><div class="mono">${esc(F.item.bare)}</div></div>` : "";
   const fb = r.correct
-    ? `<div class="feedback ok pop"><h3>Right.</h3><p class="small">${esc(F.item.s)}</p></div>`
-    : `<div class="feedback no"><h3>Not quite. It's ${esc(F.item.a)}.</h3><p class="small">${esc(F.item.s)}</p>${r.tag && r.tag !== F.tag ? `<p class="small"><b>Watch for:</b> ${esc(LESSON[r.tag].idea)}</p>` : ""}</div>`;
+    ? `<div class="feedback ok pop"><h3>Right.</h3><p class="small">${esc(F.item.s)}</p>${bridge}</div>`
+    : `<div class="feedback no"><h3>Not quite. It's ${esc(F.item.a)}.</h3><p class="small">${esc(F.item.s)}</p>${bridge}${r.tag && r.tag !== F.tag ? `<p class="small"><b>Watch for:</b> ${esc(LESSON[r.tag].idea)}</p>` : ""}</div>`;
   if (F.outcome === "stop") return `${topbar()}${fb}
     <p>Leave this one for today. Come back after a break, or look at a short video on ${esc(s.levels[F.gap - 1].toLowerCase())} first.</p>
     <button class="btn ghost" data-act="tomap">Back to the map</button>`;
-  const nextLabel = F.payoff && !F.wasPayoff ? "Now the 9th-grade version" : "Next problem";
+  const nextLabel = F.payoff && !F.wasPayoff ? (F.ctx === "dogs" ? "Now try it without the dogs" : "Now the 9th-grade version") : "Next problem";
   return `${topbar()}${fb}<button class="btn" data-act="next">${nextLabel}</button>`;
 }
 
@@ -480,9 +661,10 @@ function bind(){ picked = null; document.querySelectorAll("[data-act]").forEach(
 function go(){ save(); render(); scrollTo(0, 0); }
 function onAct(e){
   const el = e.currentTarget, act = el.dataset.act;
-  if (act === "start"){ S = fresh(); readState = {status:"idle"}; S.phase = "quiz"; S.cur = gen("A3"); go(); }
+  if (act === "start"){ S = fresh(S.interest); readState = {status:"idle"}; S.phase = "quiz"; S.cur = genFor("A3", S.interest); go(); }
+  else if (act === "interest"){ S.interest = el.dataset.v; save(); render(); }
   else if (act === "quit"){ S.phase = Object.keys(S.results).length ? "map" : "intro"; go(); }
-  else if (act === "restart"){ if (confirm("Start a new check? Your current map will be cleared.")){ S = fresh(); readState = {status:"idle"}; go(); } }
+  else if (act === "restart"){ if (confirm("Start a new check? Your current map will be cleared.")){ S = fresh(S.interest); readState = {status:"idle"}; go(); } }
   else if (act === "note"){ const w = $("#noteWrap"); w.hidden = !w.hidden; if (!w.hidden) $("#note").focus(); }
   else if (act === "pick"){
     document.querySelectorAll(".opt").forEach(o => o.setAttribute("aria-pressed", "false"));
@@ -490,8 +672,8 @@ function onAct(e){
     const b = $('[data-act="submit"]') || $('[data-act="check"]'); if (b) b.disabled = false;
   }
   else if (act === "submit") submitDiag();
-  else if (act === "fix"){ const gap = S.results[el.dataset.s].gap; F = {sid:el.dataset.s, gap, tag:tagForGap(el.dataset.s, gap), step:"lesson", right:0, tries:0, payoff:false}; S.phase = "fix"; go(); }
-  else if (act === "next"){ F.wasPayoff = F.payoff; F.item = gen(F.sid + (F.payoff ? 3 : F.gap)); F.step = "q"; render(); scrollTo(0, 0); }
+  else if (act === "fix"){ const gap = S.results[el.dataset.s].gap; F = {sid:el.dataset.s, gap, tag:tagForGap(el.dataset.s, gap), step:"lesson", right:0, tries:0, payoff:false, ctx:S.interest}; S.phase = "fix"; go(); }
+  else if (act === "next"){ F.wasPayoff = F.payoff; F.item = F.payoff ? genFor(F.sid + 3, "plain") : genFor(F.sid + F.gap, F.ctx); F.step = "q"; render(); scrollTo(0, 0); }
   else if (act === "check") checkFix();
   else if (act === "tomap"){ S.phase = "map"; F = null; go(); }
   else if (act === "read") closerRead();
@@ -513,7 +695,7 @@ function submitDiag(){
     S.tally = [];
   }
   if (S.si >= STRANDS.length){ S.phase = "map"; S.cur = null; }
-  else S.cur = gen(STRANDS[S.si].id + S.level);
+  else S.cur = genFor(STRANDS[S.si].id + S.level, S.interest);
   const ack = $("#ack"); if (ack) ack.textContent = "Got it.";
   setTimeout(go, 240);
 }
@@ -524,7 +706,7 @@ function checkFix(){
   F.outcome = null;
   if (!F.payoff){
     if (F.right >= 2){
-      if (F.gap === 3){ F.outcome = "fixed"; }
+      if (F.gap === 3 && F.ctx !== "dogs"){ F.outcome = "fixed"; }
       else { F.payoff = true; F.right = 0; F.tries = 0; }
     } else if (F.tries >= 4) F.outcome = "stop";
   } else {
