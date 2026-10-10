@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Missing Piece — algebra check</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F4F6FB; --surface:#FFFFFF; --ink:#1C2541; --pencil:#5C6784; --line:#D9DEEA;
+  --hi:#FFE14D; --hi-ink:#1C2541; --gap:#FF5DA2; --gap-soft:#FFE0EE; --solid:#2E9E6B; --solid-soft:#DDF3E8;
+  --display:'Bricolage Grotesque',ui-sans-serif,system-ui,sans-serif;
+  --body:'Atkinson Hyperlegible',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#10152A; --surface:#1A2140; --ink:#E9EDF8; --pencil:#9AA5C4; --line:#2C3560;
+    --gap-soft:#4A1F35; --solid-soft:#173A2C;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#10152A; --surface:#1A2140; --ink:#E9EDF8; --pencil:#9AA5C4; --line:#2C3560;
+  --gap-soft:#4A1F35; --solid-soft:#173A2C;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100%;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:1.0625rem;line-height:1.55;-webkit-font-smoothing:antialiased}
+main{max-width:34rem;margin:0 auto;padding:1.5rem 1.25rem 3rem}
+h1,h2,h3{font-family:var(--display);line-height:1.1;margin:0}
+h1{font-size:clamp(2.2rem,9vw,3rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:1.6rem;font-weight:800;letter-spacing:-.01em}
+h3{font-size:1.1rem;font-weight:600}
+p{margin:.75rem 0}
+.muted{color:var(--pencil)}
+.small{font-size:.92rem}
+button{font:inherit;color:inherit;cursor:pointer}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;min-height:3.1rem;padding:.7rem 1.4rem;border-radius:999px;border:2px solid var(--ink);background:var(--ink);color:var(--paper);font-weight:700;width:100%}
+.btn:disabled{opacity:.35;cursor:default}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn + .btn{margin-top:.6rem}
+:focus-visible{outline:3px solid var(--gap);outline-offset:3px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;min-height:2rem}
+.brand{font-family:var(--display);font-weight:800;font-size:1.05rem}
+.brand span{background:var(--hi);color:var(--hi-ink);padding:0 .3rem;border-radius:.25rem}
+.linkbtn{background:none;border:none;color:var(--pencil);text-decoration:underline;padding:.25rem;font-size:.92rem}
+
+/* intro */
+.hero-piece{margin:1.25rem 0 1.5rem}
+.hero-piece svg{width:100%;max-width:18rem;height:auto;display:block}
+.promises{list-style:none;padding:0;margin:1.25rem 0 1.75rem}
+.promises li{padding:.55rem 0;border-top:1px solid var(--line)}
+.promises li:last-child{border-bottom:1px solid var(--line)}
+
+/* quiz */
+.progress{display:flex;gap:.35rem;margin-bottom:1.5rem}
+.progress i{flex:1;height:.4rem;border-radius:1rem;background:var(--line)}
+.progress i.done{background:var(--ink)}
+.progress i.now{background:var(--hi)}
+.qtopic{color:var(--pencil);font-size:.92rem;margin-bottom:.35rem}
+.qtext{font-family:var(--display);font-weight:600;font-size:1.45rem;line-height:1.25;margin:0 0 1.25rem}
+.qtext .math{white-space:nowrap}
+.opts{display:grid;gap:.6rem;margin-bottom:1rem}
+.opt{display:flex;align-items:center;gap:.8rem;text-align:left;width:100%;min-height:3.4rem;padding:.75rem 1rem;border:2px solid var(--line);border-radius:1rem;background:var(--surface);font-size:1.15rem}
+.opt .dot{flex:none;width:1.15rem;height:1.15rem;border-radius:50%;border:2px solid var(--pencil)}
+.opt[aria-pressed="true"]{border-color:var(--ink)}
+.opt[aria-pressed="true"] .dot{background:var(--hi);border-color:var(--ink);box-shadow:inset 0 0 0 3px var(--surface)}
+.opt.unsure{font-size:1rem;color:var(--pencil);background:transparent;border-style:dashed}
+.note-toggle{margin:.25rem 0 .5rem}
+textarea{width:100%;min-height:5rem;padding:.75rem;border-radius:.8rem;border:2px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;resize:vertical}
+.ack{font-family:var(--display);font-weight:600;color:var(--pencil);height:1.5rem;margin:.5rem 0}
+
+/* map */
+.map{margin:1.5rem 0;display:grid;gap:1.1rem}
+.strand{display:grid;grid-template-columns:1fr;gap:.45rem}
+.strand-head{display:flex;justify-content:space-between;align-items:baseline;gap:1rem}
+.strand-head h3{font-size:1.05rem}
+.status{font-size:.88rem;color:var(--pencil);white-space:nowrap}
+.status.gap{color:var(--gap);font-weight:700}
+.status.fixed{color:var(--solid);font-weight:700}
+.track{display:grid;grid-template-columns:repeat(3,1fr);gap:.3rem}
+.cell{height:2.2rem;border-radius:.5rem;background:var(--line);position:relative;display:flex;align-items:center;padding:0 .5rem;font-size:.72rem;line-height:1.1;color:var(--pencil);overflow:hidden}
+.cell.solid{background:var(--hi);color:var(--hi-ink)}
+.cell.gap{background:var(--gap-soft);color:var(--ink);box-shadow:inset 0 0 0 2px var(--gap)}
+.cell.fixed{background:var(--solid-soft);color:var(--ink);box-shadow:inset 0 0 0 2px var(--solid)}
+.cell.unknown{background:transparent;box-shadow:inset 0 0 0 1px var(--line)}
+.legend{display:flex;flex-wrap:wrap;gap:.9rem;font-size:.85rem;color:var(--pencil);margin:.25rem 0 1.25rem}
+.legend span{display:inline-flex;align-items:center;gap:.35rem}
+.legend b{display:inline-block;width:.9rem;height:.9rem;border-radius:.2rem}
+.callout{background:var(--surface);border:2px solid var(--line);border-radius:1.1rem;padding:1.1rem 1.15rem;margin:1.25rem 0}
+.callout h3{margin-bottom:.25rem}
+.reads{margin-top:.75rem}
+.read{padding:.65rem 0;border-top:1px solid var(--line)}
+.read b{display:block;font-size:.9rem;color:var(--pencil);font-weight:400}
+
+/* fix */
+.piece{border-radius:1.1rem;overflow:hidden;border:2px solid var(--ink);margin:1.25rem 0}
+.piece .row{padding:1rem 1.15rem}
+.piece .row + .row{border-top:2px solid var(--ink)}
+.piece .lab{font-size:.88rem;color:var(--pencil);margin-bottom:.2rem}
+.piece .wrong{background:var(--gap-soft)}
+.piece .right{background:var(--surface)}
+.piece .ex{background:var(--hi);color:var(--hi-ink)}
+.piece .ex .lab{color:var(--hi-ink);opacity:.75}
+.mono{font-variant-numeric:tabular-nums}
+.feedback{border-radius:1rem;padding:1rem 1.1rem;margin:1rem 0}
+.feedback.ok{background:var(--solid-soft)}
+.feedback.no{background:var(--gap-soft)}
+.big-win{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1.1;margin:1rem 0 .5rem}
+@media (prefers-reduced-motion:no-preference){
+  .pop{animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
+  @keyframes pop{from{transform:scale(.92);opacity:0}to{transform:none;opacity:1}}
+}
+</style>
+</head>
+<body>
+<main id="app" aria-live="polite"></main>
+
+<script>
+/* ---------- settings ----------
+   When hosted outside Claude, set this to your Cloudflare Worker URL
+   (e.g. "https://missing-piece.yourname.workers.dev") to enable the closer read. */
+const API_URL = "";
+
+/* ---------- topics ---------- */
+const STRANDS = [
+  {id:"A", name:"Equations", levels:["The equals sign","Two-step equations","x on both sides"]},
+  {id:"B", name:"Fractions", levels:["Adding related fractions","Comparing fractions","Different denominators"]},
+  {id:"C", name:"Ratios", levels:["Per-one rates","Unit pricing","Scaling up"]},
+  {id:"D", name:"Negative numbers", levels:["The number line","Subtracting negatives","Negatives & brackets"]},
+  {id:"E", name:"Letters & expressions", levels:["Like terms","Plugging in values","Brackets + like terms"]},
+];
+const FOUNDATION = ["B","D","A","E","C"];
+
+/* ---------- number helpers ---------- */
+const R = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const gcd = (a, b) => { a = Math.abs(a); b = Math.abs(b); while (b) [a, b] = [b, a % b]; return a || 1; };
+const lcm = (a, b) => Math.abs(a * b) / gcd(a, b);
+const MINUS = "−";
+const num = n => (n < 0 ? MINUS : "") + Math.abs(n);
+const dec = n => { const r = Math.round(n * 100) / 100; return (r < 0 ? MINUS : "") + String(Math.abs(r)); };
+const approx = n => { const r = Math.round(n * 10) / 10; return Number.isInteger(n) ? num(n) : (Math.abs(r - n) < 1e-9 ? dec(r) : "about " + dec(r)); };
+const money = m => "$" + (Number.isInteger(m) ? m : m.toFixed(2));
+function frac(n, d){ if (d < 0){ n = -n; d = -d; } const g = gcd(n, d); n /= g; d /= g; return d === 1 ? num(n) : (n < 0 ? MINUS : "") + Math.abs(n) + "/" + d; }
+// linear expression like "3x − 5", "−x + 2", "x"
+function lin(a, b, v = "x"){
+  let s = a === 0 ? "" : a === 1 ? v : a === -1 ? MINUS + v : num(a) + v;
+  if (b !== 0) s = s ? s + (b < 0 ? " − " : " + ") + Math.abs(b) : num(b);
+  return s || "0";
+}
+function shuffle(a){ a = a.slice(); for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+// assemble options; reject if fewer than 2 distinct wrong answers
+function build(q, a, wrongs, s){
+  const seen = new Set([a]), opts = [{t:a, tag:null, ok:true}];
+  for (const [t, tag] of wrongs){ if (!seen.has(t)){ seen.add(t); opts.push({t, tag, ok:false}); } }
+  return opts.length >= 3 ? {q, a, s, opts: shuffle(opts)} : null;
+}
+function gen(id){ for (let i = 0; i < 2000; i++){ const p = G[id](); if (p) return p; } throw new Error("generator " + id); }
+
+/* ---------- problem generators: one per topic level ----------
+   Every wrong option is produced by applying a specific faulty rule
+   to the same random numbers, so a wrong pick points at a misconception. */
+const G = {
+  A1(){
+    const a = R(3, 14), b = R(3, 14), sum = a + b;
+    if (Math.random() < .6){
+      const c = R(2, sum - 2), ans = sum - c;
+      return build(`What goes in the box?  ${a} + ${b} = ☐ + ${c}`, num(ans),
+        [[num(sum), "EQUALS_ANSWER"], [num(sum + c), "EQUALS_ANSWER"]],
+        `The left side is worth ${sum}, so the right side must be too. ☐ + ${c} = ${sum}, so ☐ = ${ans}.`);
+    }
+    const c = R(2, 9), ans = sum + c;
+    return build(`What goes in the box?  ☐ − ${c} = ${a} + ${b}`, num(ans),
+      [[num(sum), "EQUALS_ANSWER"], [num(sum - c), "EQUALS_ANSWER"]],
+      `The right side is worth ${sum}. Something minus ${c} equals ${sum}, so ☐ = ${sum} + ${c} = ${ans}.`);
+  },
+  A2(){
+    const a = R(2, 7), x = R(2, 9), b = R(2, 12), plus = Math.random() < .5;
+    const c = plus ? a * x + b : a * x - b;
+    if (c <= 0) return null;
+    const lhs = lin(a, plus ? b : -b);
+    const undone = plus ? c - b : c + b;
+    return build(`Solve: ${lhs} = ${c}`, "x = " + x,
+      [["x = " + frac(plus ? c + b : c - b, a), "SIGN_MOVE"],
+       ["x = " + num(undone * a), "INVERSE_OPS"],
+       ["x = " + num(undone), "INVERSE_OPS"]],
+      `${plus ? "Subtract " + b + " from" : "Add " + b + " to"} both sides: ${a}x = ${undone}. Divide both sides by ${a}: x = ${x}.`);
+  },
+  A3(){
+    const c = R(1, 5), k = R(1, 3), a = c + k;
+    const x = pick([-9,-8,-7,-6,-5,-4,-3,-2,2,3,4,5,6,7,8,9]);
+    const b = pick([-12,-10,-9,-8,-7,-6,-5,-4,-3,-2,2,3,4,5,6,7,8,9,10,12]);
+    const d = k * x + b; if (d === 0) return null;
+    return build(`Solve: ${lin(a, b)} = ${lin(c, d)}`, "x = " + num(x),
+      [["x = " + frac(d + b, k), "SIGN_MOVE"],
+       ["x = " + num(-x), "NEG_RULES"],
+       ["x = " + frac(d - b, a + c), "SIGN_MOVE"]],
+      `Take ${c === 1 ? "x" : c + "x"} from both sides: ${lin(k, b)} = ${num(d)}. ${b > 0 ? "Subtract " + b : "Add " + (-b)} on both sides: ${k === 1 ? "x" : k + "x"} = ${num(d - b)}.${k > 1 ? " Divide by " + k + ": x = " + num(x) + "." : ""}`);
+  },
+  B1(){
+    const p = pick([2,3,4,5]), k = pick([2,3]), q = p * k;
+    const a = R(1, p - 1), b = R(1, q - 1);
+    if (gcd(a, p) !== 1 || gcd(b, q) !== 1) return null;
+    return build(`${a}/${p} + ${b}/${q} = ?`, frac(a * k + b, q),
+      [[frac(a + b, p + q), "ADD_ACROSS"], [frac(a + b, q), "NO_SCALE"], [frac(a * b, p * q), "ADD_ACROSS"]],
+      `${a}/${p} is the same as ${a * k}/${q}. Then ${a * k}/${q} + ${b}/${q} = ${a * k + b}/${q}${frac(a * k + b, q) !== (a * k + b) + "/" + q ? " = " + frac(a * k + b, q) : ""}.`);
+  },
+  B2(){
+    // trap: the fraction with the bigger numbers is the smaller one
+    const b = R(3, 9), d = R(b + 1, 12), a = R(1, b - 1), c = R(a + 1, d - 1);
+    if (gcd(a, b) !== 1 || gcd(c, d) !== 1 || a * d === b * c || c / d >= a / b) return null;
+    const big = `${a}/${b}`, small = `${c}/${d}`, askBig = Math.random() < .6;
+    const right = askBig ? big : small, wrong = askBig ? small : big;
+    return build(`Which is ${askBig ? "bigger" : "smaller"}: ${shuffle([big, small]).join(" or ")}?`, right,
+      [[wrong, "WHOLE_NUMBER_FRAC"], ["They're equal", "WHOLE_NUMBER_FRAC"]],
+      `${big} ≈ ${dec(a / b)} and ${small} ≈ ${dec(c / d)}, so ${big} is bigger. ${d}ths are smaller pieces than ${b}ths.`);
+  },
+  B3(){
+    const b = R(3, 9), d = R(3, 9);
+    if (b === d || b % d === 0 || d % b === 0) return null;
+    const a = R(1, b - 1), c = R(1, d - 1);
+    if (gcd(a, b) !== 1 || gcd(c, d) !== 1) return null;
+    const L = lcm(b, d), A = a * L / b, C = c * L / d;
+    return build(`${a}/${b} + ${c}/${d} = ?`, frac(A + C, L),
+      [[frac(a + c, b + d), "ADD_ACROSS"], [frac(a + c, L), "NO_SCALE"], [frac(a * c, b * d), "ADD_ACROSS"]],
+      `Make the bottoms match at ${L}: ${a}/${b} = ${A}/${L} and ${c}/${d} = ${C}/${L}. Add the tops: ${A + C}/${L}${frac(A + C, L) !== (A + C) + "/" + L ? " = " + frac(A + C, L) : ""}.`);
+  },
+  C1(){
+    const ctx = pick([
+      {who:"A car", verb:"drives", u:"miles", t:"hours", t1:"hour"},
+      {who:"A cyclist", verb:"rides", u:"kilometers", t:"hours", t1:"hour"},
+      {who:"A printer", verb:"prints", u:"pages", t:"minutes", t1:"minute"},
+      {who:"A pump", verb:"moves", u:"gallons", t:"minutes", t1:"minute"}]);
+    const r = R(4, 14) * 5, h = R(2, 5), D = r * h;
+    return build(`${ctx.who} ${ctx.verb} ${D} ${ctx.u} in ${h} ${ctx.t} at a steady rate. How many ${ctx.u} in 1 ${ctx.t1}?`, `${r} ${ctx.u}`,
+      [[`${D - (h - 1)} ${ctx.u}`, "ADDITIVE_RATIO"], [`${D * h} ${ctx.u}`, "RATIO_FLIP"], [`${D - h} ${ctx.u}`, "ADDITIVE_RATIO"]],
+      `Share the ${D} evenly over ${h} ${ctx.t}: ${D} ÷ ${h} = ${r} each ${ctx.t1}.`);
+  },
+  C2(){
+    const item = pick(["notebooks","pens","bus tickets","apples","phone cases","stickers"]);
+    const u = pick([0.5, 0.75, 1.25, 1.5, 2, 2.5, 3, 4]), n = R(3, 10), m = R(2, 12);
+    if (m === n) return null;
+    const P = u * n, ans = u * m;
+    if (P + (m - n) <= 0) return null;
+    return build(`${n} ${item} cost ${money(P)}. What do ${m} ${item} cost?`, money(ans),
+      [[money(P + (m - n)), "ADDITIVE_RATIO"], [money(Math.round(n * m / P * 100) / 100), "RATIO_FLIP"], [money(u), "UNIT_RATE"], [money(P * m), "UNIT_RATE"]].slice(0, 3 + (Math.random() < .3 ? 1 : 0)),
+      `One costs ${money(P)} ÷ ${n} = ${money(u)}. So ${m} cost ${m} × ${money(u)} = ${money(ans)}.`);
+  },
+  C3(){
+    const ctx = pick([
+      {unit:"cups of flour", u:"cups", grp:"people"}, {unit:"liters of paint", u:"liters", grp:"walls"},
+      {unit:"scoops of coffee", u:"scoops", grp:"mugs"}, {unit:"bags of soil", u:"bags", grp:"planters"}]);
+    const a = R(2, 6), p = R(2, 8), q = R(p + 1, p * 4);
+    if ((2 * a * q) % p !== 0 || (a * q) % p === 0 && q % p === 0) return null;
+    const ans = a * q / p;
+    return build(`${a} ${ctx.unit} is enough for ${p} ${ctx.grp}. How much for ${q} ${ctx.grp}?`, `${dec(ans)} ${ctx.u}`,
+      [[`${num(a + q - p)} ${ctx.u}`, "ADDITIVE_RATIO"], [`${approx(p * q / a)} ${ctx.u}`, "RATIO_FLIP"], [`${num(a * q)} ${ctx.u}`, "UNIT_RATE"]],
+      `Each of the ${ctx.grp} needs ${a} ÷ ${p}. For ${q}: ${q} × ${a} ÷ ${p} = ${dec(ans)} ${ctx.u}.`);
+  },
+  D1(){
+    const m = R(1, 20), n = R(1, 20); if (m === n) return null;
+    const x = -m, y = -n, lo = Math.min(x, y), hi = Math.max(x, y);
+    const kind = pick(["smaller","greater","colder"]);
+    if (kind === "colder")
+      return build(`Which is colder: ${num(x)}° or ${num(y)}°?`, num(lo) + "°",
+        [[num(hi) + "°", "NEG_ORDER"], ["They're the same", "NEG_ORDER"]],
+        `${num(lo)} is further below zero, so it's colder, and on the number line it's further left.`);
+    const right = kind === "smaller" ? lo : hi, wrong = kind === "smaller" ? hi : lo;
+    return build(`Which is ${kind}: ${num(x)} or ${num(y)}?`, num(right),
+      [[num(wrong), "NEG_ORDER"], ["They're the same size", "NEG_ORDER"]],
+      `On the number line ${num(lo)} is further left, so ${num(lo)} is smaller and ${num(hi)} is greater.`);
+  },
+  D2(){
+    const a = pick([R(-12, -1), R(1, 12)]), b = R(1, 12), ans = a + b;
+    return build(`${num(a)} − (${num(-b)}) = ?`, num(ans),
+      [[num(a - b), "NEG_SUBTRACT"], [num(-(a + b)), "NEG_RULES"], [num(b - a), "NEG_RULES"]],
+      `Subtracting ${num(-b)} is the same as adding ${b}: ${num(a)} + ${b} = ${num(ans)}.`);
+  },
+  D3(){
+    const k = R(2, 7), m = R(2, 9), v = pick(["x","y","n"]), sign = pick([1, -1]);
+    const inner = sign > 0 ? `${v} + ${m}` : `${v} − ${m}`;
+    return build(`Simplify: ${MINUS}${k}(${inner})`, lin(-k, -k * m * sign, v),
+      [[lin(-k, m * sign, v), "DISTRIB_PARTIAL"], [lin(-k, k * m * sign, v), "NEG_RULES"], [lin(k, -k * m * sign, v), "NEG_RULES"]],
+      `${MINUS}${k} multiplies both terms: ${MINUS}${k} · ${v} = ${lin(-k, 0, v)} and ${MINUS}${k} · ${sign < 0 ? "(" + num(-m) + ")" : m} = ${num(-k * m * sign)}.`);
+  },
+  E1(){
+    const v = pick(["a","b","n","x","y","t"]), a = R(3, 12), b = R(2, a - 1), minus = Math.random() < .5;
+    const c = minus ? a - b : a + b; if (c === 1) return null;
+    return build(`Simplify: ${a}${v} ${minus ? "−" : "+"} ${b}${v}`, `${c}${v}`,
+      [[num(c), "VARIABLE_MEANING"], [`${a * b}${v}`, "VARIABLE_MEANING"], [`${c}${v}²`, "VARIABLE_MEANING"]],
+      `${a} of something ${minus ? "take away" : "plus"} ${b} of the same thing is ${c} of it: ${c}${v}.`);
+  },
+  E2(){
+    const v = pick(["n","x","k","m"]), p = R(2, 9), n = R(2, 9), q = R(1, 9), plus = Math.random() < .5;
+    const ans = plus ? p * n + q : p * n - q;
+    const glued = Number(`${p}${n}`);
+    return build(`If ${v} = ${n}, what is ${p}${v} ${plus ? "+" : "−"} ${q}?`, num(ans),
+      [[num(plus ? glued + q : glued - q), "VARIABLE_MEANING"], [num(plus ? p + n + q : p + n - q), "VARIABLE_MEANING"]],
+      `${p}${v} means ${p} × ${v} = ${p} × ${n} = ${p * n}. Then ${p * n} ${plus ? "+" : "−"} ${q} = ${ans}.`);
+  },
+  E3(){
+    const v = pick(["x","y","a"]), k = R(2, 6), m = R(2, 8), j = R(2, 7), sign = pick([1, -1]);
+    const inner = sign > 0 ? `${v} + ${m}` : `${v} − ${m}`;
+    return build(`Simplify: ${k}(${inner}) + ${j}${v}`, lin(k + j, k * m * sign, v),
+      [[lin(k + j, m * sign, v), "DISTRIB_PARTIAL"], [lin(k + j + k * m * sign, 0, v), "COMBINE_UNLIKE"], [lin(k + j, k * m * sign + j, v), "COMBINE_UNLIKE"]],
+      `${k}(${inner}) = ${lin(k, k * m * sign, v)}. Add ${j}${v}: the ${v}-terms make ${k + j}${v}, and ${num(k * m * sign)} has no ${v}, so it stays separate.`);
+  },
+};
+
+const LESSON = {
+  EQUALS_ANSWER:{name:"The equals sign", rule:"“=” means “now write the answer.”", idea:"“=” means both sides are worth the same amount. It's a balance, not an arrow.", ex:"8 + 4 = ☐ + 5\nLeft side is 12, so the right side must be 12 too. ☐ = 7."},
+  SIGN_MOVE:{name:"Moving things across the =", rule:"Move a number to the other side and keep its sign.", idea:"Nothing actually moves. You do the same thing to both sides. To get rid of +5, subtract 5 from both sides, which is why it shows up as −5.", ex:"x + 5 = 2\nx + 5 − 5 = 2 − 5\nx = −3"},
+  INVERSE_OPS:{name:"Undoing steps", rule:"Undo with the same operation, or stop after one step.", idea:"Undo each step with its opposite: + or − first, then × or ÷. Keep going until x is alone.", ex:"4x − 6 = 18\nAdd 6: 4x = 24\nDivide by 4: x = 6"},
+  ADD_ACROSS:{name:"Adding fractions", rule:"Add the tops and add the bottoms.", idea:"The bottom number says how big the pieces are. You can only add pieces of the same size, so make the bottoms match, then add the tops.", ex:"1/2 + 1/4\n= 2/4 + 1/4\n= 3/4"},
+  NO_SCALE:{name:"Matching denominators", rule:"Change the bottom, leave the top alone.", idea:"Whatever you multiply the bottom by, multiply the top by the same number. Otherwise you've changed the fraction's value.", ex:"1/2 → ×2 top and bottom → 2/4\n3/4 + 5/6 = 9/12 + 10/12 = 19/12"},
+  WHOLE_NUMBER_FRAC:{name:"Comparing fractions", rule:"Bigger numbers mean a bigger fraction.", idea:"A bigger bottom means smaller pieces. Compare by turning both into decimals or giving them the same bottom.", ex:"3/8 = 0.375\n2/5 = 0.4\nSo 2/5 is bigger."},
+  ADDITIVE_RATIO:{name:"Scaling up", rule:"If one amount goes up by 6, the other goes up by 6 too.", idea:"Ratios grow by multiplying, not adding. Going from 4 people to 10 people is × 2.5, so the flour is × 2.5 too.", ex:"3 cups for 4 people\n× 2.5 → 7.5 cups for 10 people"},
+  RATIO_FLIP:{name:"Setting up a ratio", rule:"Divide whichever way gives a nice number.", idea:"Keep the same kind of thing on top in both ratios: cups over people = cups over people.", ex:"3 cups / 4 people = ? cups / 10 people\n? = 10 × 3 ÷ 4 = 7.5"},
+  UNIT_RATE:{name:"The “per one” step", rule:"Multiply by the new amount straight away, or stop at the price of one.", idea:"Find how much for one, then multiply by how many you need. Two steps, both needed.", ex:"$9 for 6 notebooks\n$9 ÷ 6 = $1.50 each\n4 × $1.50 = $6"},
+  NEG_ORDER:{name:"Which negative is smaller", rule:"−7 is bigger than −2, because 7 is bigger than 2.", idea:"On the number line, further left is smaller. Think temperature: −7° is colder than −2°.", ex:"−7 < −2"},
+  NEG_SUBTRACT:{name:"Subtracting a negative", rule:"Minus a negative makes it more negative.", idea:"Taking away a debt leaves you better off. Subtracting −8 is the same as adding 8.", ex:"−5 − (−8)\n= −5 + 8\n= 3"},
+  NEG_RULES:{name:"Sign rules", rule:"Signs get guessed or dropped along the way.", idea:"Two rules cover most of it: subtracting a negative = adding. Negative × negative = positive; one negative = negative.", ex:"−3 × −4 = 12\n−3 × 4 = −12\n6 − (−2) = 8"},
+  DISTRIB_PARTIAL:{name:"Multiplying out brackets", rule:"Multiply only the first thing inside the brackets.", idea:"The number outside multiplies everything inside. Every term gets it, signs included.", ex:"−3(x − 4)\n= −3·x + (−3)·(−4)\n= −3x + 12"},
+  COMBINE_UNLIKE:{name:"Like terms", rule:"Add everything together, letters and plain numbers.", idea:"x-terms combine with x-terms, plain numbers with plain numbers. 6 apples + 6 dollars isn't 12 of anything.", ex:"2x + 6 + 4x\n= (2x + 4x) + 6\n= 6x + 6"},
+  VARIABLE_MEANING:{name:"What a letter means", rule:"3n means 3 written next to n (like 34), or 3 + n.", idea:"A letter stands for a number. 3n means 3 × n. And 5a + 2a is just 5 of something plus 2 more of the same thing.", ex:"n = 4\n3n + 2 = 3 × 4 + 2 = 14\n5a + 2a = 7a"},
+};
+const DEFAULT_TAG = {A1:"EQUALS_ANSWER",A2:"INVERSE_OPS",A3:"SIGN_MOVE",B1:"ADD_ACROSS",B2:"WHOLE_NUMBER_FRAC",B3:"NO_SCALE",C1:"UNIT_RATE",C2:"UNIT_RATE",C3:"ADDITIVE_RATIO",D1:"NEG_ORDER",D2:"NEG_SUBTRACT",D3:"DISTRIB_PARTIAL",E1:"VARIABLE_MEANING",E2:"VARIABLE_MEANING",E3:"COMBINE_UNLIKE"};
+
+/* ---------- state ---------- */
+const KEY = "missing-piece-v2";
+let S = load() || fresh();
+function fresh(){ return {phase:"intro", si:0, level:3, tally:[], cur:null, log:[], results:{}, fixed:{}}; }
+function load(){ try{ const r = localStorage.getItem(KEY); return r ? JSON.parse(r) : null; }catch(e){ return null; } }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+
+let sample = null, readState = {status:"idle"};
+(async () => { try{ if (window.claude && claude.use){ sample = await claude.use("sample"); render(); } }catch(e){ sample = null; } })();
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const strandById = id => STRANDS.find(s => s.id === id);
+function nextGap(){
+  const g = STRANDS.map(s => ({id:s.id, r:S.results[s.id]})).filter(x => x.r && x.r.gap && !S.fixed[x.id]);
+  g.sort((a, b) => a.r.gap - b.r.gap || FOUNDATION.indexOf(a.id) - FOUNDATION.indexOf(b.id));
+  return g[0] || null;
+}
+function tagForGap(sid, gap){
+  const counts = {};
+  S.log.filter(l => l.qid === sid + gap && !l.correct && l.tag).forEach(l => counts[l.tag] = (counts[l.tag] || 0) + 1);
+  const best = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  return best ? best[0] : DEFAULT_TAG[sid + gap];
+}
+
+/* ---------- views ---------- */
+function render(){
+  const v = {intro:viewIntro, quiz:viewQuiz, map:viewMap, fix:viewFix}[S.phase];
+  $("#app").innerHTML = v(); bind();
+}
+const topbar = (extra = "") => `<div class="top"><div class="brand"><span>Missing</span> Piece</div>${extra}</div>`;
+const optButtons = (opts, unsure) => `<div class="opts" role="group" aria-label="Answers">
+  ${opts.map((o, i) => `<button class="opt" aria-pressed="false" data-act="pick" data-i="${i}"><span class="dot"></span><span class="mono">${esc(o.t)}</span></button>`).join("")}
+  ${unsure ? `<button class="opt unsure" aria-pressed="false" data-act="pick" data-i="-1"><span class="dot"></span>Not sure</button>` : ""}</div>`;
+
+function viewIntro(){
+  return `${topbar()}
+  <h1>Find the bit that never clicked.</h1>
+  <div class="hero-piece" aria-hidden="true"><svg viewBox="0 0 300 120">
+    <rect x="4" y="20" width="56" height="56" rx="10" fill="var(--hi)" stroke="var(--ink)" stroke-width="3"/>
+    <rect x="64" y="20" width="56" height="56" rx="10" fill="var(--hi)" stroke="var(--ink)" stroke-width="3"/>
+    <rect x="124" y="20" width="56" height="56" rx="10" fill="none" stroke="var(--gap)" stroke-width="3" stroke-dasharray="7 6"/>
+    <rect x="184" y="20" width="56" height="56" rx="10" fill="var(--line)"/>
+    <rect x="244" y="20" width="52" height="56" rx="10" fill="var(--line)"/>
+    <g transform="translate(138 74) rotate(-14)"><rect width="50" height="50" rx="10" fill="var(--gap)" stroke="var(--ink)" stroke-width="3"/></g>
+  </svg></div>
+  <p>Math builds on itself. Miss one piece and everything after it feels harder than it should. This finds which piece.</p>
+  <ul class="promises">
+    <li>New problems every time, so there's nothing to memorize.</li>
+    <li>Nothing is graded and nobody else sees it.</li>
+    <li>“Not sure” is a real answer. Guessing just makes the map less accurate.</li>
+  </ul>
+  <button class="btn" data-act="start">Start</button>`;
+}
+
+function viewQuiz(){
+  const s = STRANDS[S.si], item = S.cur;
+  const bars = STRANDS.map((_, i) => `<i class="${i < S.si ? "done" : i === S.si ? "now" : ""}"></i>`).join("");
+  return `${topbar(`<button class="linkbtn" data-act="quit">Exit</button>`)}
+  <div class="progress" aria-label="Topic ${S.si + 1} of 5">${bars}</div>
+  <div class="qtopic">${esc(s.name)}</div>
+  <p class="qtext">${esc(item.q)}</p>
+  ${optButtons(item.opts, true)}
+  <div class="note-toggle"><button class="linkbtn" data-act="note">Add how you got it (optional)</button></div>
+  <div id="noteWrap" hidden><label class="small muted" for="note">How did you get your answer? A few words is fine.</label><textarea id="note" maxlength="400"></textarea></div>
+  <div class="ack" id="ack"></div>
+  <button class="btn" data-act="submit" disabled>Next</button>`;
+}
+
+function viewMap(){
+  const done = STRANDS.every(s => S.results[s.id]);
+  const rows = STRANDS.map(s => {
+    const r = S.results[s.id], fixed = S.fixed[s.id];
+    let status = "not checked", cls = "";
+    if (r && !r.gap) status = "solid";
+    else if (r && fixed){ status = "fixed"; cls = "fixed"; }
+    else if (r){ status = "missing piece"; cls = "gap"; }
+    const cells = s.levels.map((lab, i) => {
+      const lvl = i + 1; let c = "unknown";
+      if (r){ if (!r.gap || lvl < r.gap) c = "solid"; else if (lvl === r.gap) c = fixed ? "fixed" : "gap"; }
+      return `<div class="cell ${c}" title="${esc(lab)}">${esc(lab)}</div>`;
+    }).join("");
+    return `<div class="strand"><div class="strand-head"><h3>${esc(s.name)}</h3><span class="status ${cls}">${status}</span></div><div class="track">${cells}</div></div>`;
+  }).join("");
+
+  const g = nextGap(), allSolid = done && STRANDS.every(s => !S.results[s.id].gap);
+  let action;
+  if (allSolid) action = `<div class="callout"><h3>All five are solid.</h3><p>The foundations for 9th-grade algebra are in place. If class still feels hard, the gap is probably in a newer topic, not an old one.</p></div>`;
+  else if (g){ const s = strandById(g.id);
+    action = `<div class="callout"><h3>Start here: ${esc(s.name)}</h3><p class="muted">${esc(s.levels[g.r.gap - 1])}. It's the most basic piece that's missing, so fixing it makes the rest easier.</p><button class="btn" data-act="fix" data-s="${g.id}">Fix this one</button></div>`; }
+  else action = `<div class="callout"><h3>Every gap found today is fixed.</h3><p>Run a fresh check in a week. The problems will be new, so if it's still solid then, it's really yours.</p><button class="btn ghost" data-act="start">Run a fresh check</button></div>`;
+
+  let readBox = "";
+  if ((sample || API_URL) && S.log.some(l => !l.correct && l.note)){
+    if (readState.status === "idle") readBox = `<div class="callout"><h3>Want a closer read?</h3><p class="small muted">Claude reads the explanations you wrote and points out the rule you were probably using. Only those answers and notes are sent.</p><button class="btn ghost" data-act="read">Get a closer read</button></div>`;
+    else if (readState.status === "loading") readBox = `<div class="callout"><h3>Reading your explanations…</h3></div>`;
+    else if (readState.status === "error") readBox = `<div class="callout"><h3>Couldn't get a read right now.</h3><p class="small muted">${esc(readState.err)}</p></div>`;
+    else { const d = readState.data;
+      readBox = `<div class="callout pop"><h3>What your explanations show</h3>${d.summary ? `<p>${esc(d.summary)}</p>` : ""}<div class="reads">${(d.reads || []).map(x => `<div class="read"><b>${esc(x.question || "")}</b>${esc(x.read || "")}</div>`).join("")}</div></div>`; }
+  }
+  return `${topbar(`<button class="linkbtn" data-act="restart">Start over</button>`)}
+  <h2>Your map</h2>
+  <div class="map">${rows}</div>
+  <div class="legend"><span><b style="background:var(--hi)"></b>solid</span><span><b style="box-shadow:inset 0 0 0 2px var(--gap);background:var(--gap-soft)"></b>missing piece</span><span><b style="box-shadow:inset 0 0 0 2px var(--solid);background:var(--solid-soft)"></b>fixed</span><span><b style="box-shadow:inset 0 0 0 1px var(--line)"></b>not reached</span></div>
+  ${action}${readBox}`;
+}
+
+/* fix: lesson → 2 right at the gap level (max 4 tries) → 1 right at 9th-grade level (max 2 tries) */
+let F = null;
+function viewFix(){
+  const s = strandById(F.sid), L = LESSON[F.tag], back = `<button class="linkbtn" data-act="tomap">Map</button>`;
+  if (F.step === "lesson") return `${topbar(back)}
+    <div class="qtopic">${esc(s.name)}: ${esc(s.levels[F.gap - 1])}</div>
+    <h2>${esc(L.name)}</h2>
+    <div class="piece">
+      <div class="row wrong"><div class="lab">The rule that's been tripping you up</div>${esc(L.rule)}</div>
+      <div class="row right"><div class="lab">What's actually going on</div>${esc(L.idea)}</div>
+      <div class="row ex"><div class="lab">Example</div><div class="mono" style="white-space:pre-line">${esc(L.ex)}</div></div>
+    </div>
+    <button class="btn" data-act="next">Try some</button>`;
+  if (F.step === "q"){
+    const label = F.payoff ? "The 9th-grade version" : `Practice: ${F.right} of 2 right so far`;
+    return `${topbar(back)}
+    <div class="qtopic">${label}</div>
+    <p class="qtext">${esc(F.item.q)}</p>
+    ${optButtons(F.item.opts, true)}
+    <button class="btn" data-act="check" disabled>Check</button>`;
+  }
+  // result
+  const r = F.last;
+  if (F.outcome === "fixed") return `${topbar()}
+    <p class="big-win pop">That's the kind that used to get you.</p>
+    <p>${esc(s.name)} is marked fixed. Run a fresh check in a week. The problems will be different, so if it holds up, it's locked in.</p>
+    <button class="btn" data-act="tomap">Back to the map</button>`;
+  const fb = r.correct
+    ? `<div class="feedback ok pop"><h3>Right.</h3><p class="small">${esc(F.item.s)}</p></div>`
+    : `<div class="feedback no"><h3>Not quite. It's ${esc(F.item.a)}.</h3><p class="small">${esc(F.item.s)}</p>${r.tag && r.tag !== F.tag ? `<p class="small"><b>Watch for:</b> ${esc(LESSON[r.tag].idea)}</p>` : ""}</div>`;
+  if (F.outcome === "stop") return `${topbar()}${fb}
+    <p>Leave this one for today. Come back after a break, or look at a short video on ${esc(s.levels[F.gap - 1].toLowerCase())} first.</p>
+    <button class="btn ghost" data-act="tomap">Back to the map</button>`;
+  const nextLabel = F.payoff && !F.wasPayoff ? "Now the 9th-grade version" : "Next problem";
+  return `${topbar()}${fb}<button class="btn" data-act="next">${nextLabel}</button>`;
+}
+
+/* ---------- events ---------- */
+let picked = null;
+function bind(){ picked = null; document.querySelectorAll("[data-act]").forEach(el => el.addEventListener("click", onAct)); }
+function go(){ save(); render(); scrollTo(0, 0); }
+function onAct(e){
+  const el = e.currentTarget, act = el.dataset.act;
+  if (act === "start"){ S = fresh(); readState = {status:"idle"}; S.phase = "quiz"; S.cur = gen("A3"); go(); }
+  else if (act === "quit"){ S.phase = Object.keys(S.results).length ? "map" : "intro"; go(); }
+  else if (act === "restart"){ if (confirm("Start a new check? Your current map will be cleared.")){ S = fresh(); readState = {status:"idle"}; go(); } }
+  else if (act === "note"){ const w = $("#noteWrap"); w.hidden = !w.hidden; if (!w.hidden) $("#note").focus(); }
+  else if (act === "pick"){
+    document.querySelectorAll(".opt").forEach(o => o.setAttribute("aria-pressed", "false"));
+    el.setAttribute("aria-pressed", "true"); picked = Number(el.dataset.i);
+    const b = $('[data-act="submit"]') || $('[data-act="check"]'); if (b) b.disabled = false;
+  }
+  else if (act === "submit") submitDiag();
+  else if (act === "fix"){ const gap = S.results[el.dataset.s].gap; F = {sid:el.dataset.s, gap, tag:tagForGap(el.dataset.s, gap), step:"lesson", right:0, tries:0, payoff:false}; S.phase = "fix"; go(); }
+  else if (act === "next"){ F.wasPayoff = F.payoff; F.item = gen(F.sid + (F.payoff ? 3 : F.gap)); F.step = "q"; render(); scrollTo(0, 0); }
+  else if (act === "check") checkFix();
+  else if (act === "tomap"){ S.phase = "map"; F = null; go(); }
+  else if (act === "read") closerRead();
+}
+
+// diagnostic: 2 problems per level; a split 1–1 gets a tiebreaker. Pass = majority right.
+function submitDiag(){
+  const sb = $('[data-act="submit"]'); if (!sb || sb.disabled) return; sb.disabled = true;
+  const s = STRANDS[S.si], item = S.cur, o = picked >= 0 ? item.opts[picked] : null;
+  const correct = !!(o && o.ok);
+  S.log.push({qid:s.id + S.level, q:item.q, a:item.a, chosen:o ? o.t : "Not sure", correct, tag:o ? o.tag : null, note:($("#note") && $("#note").value.trim()) || ""});
+  S.tally.push(correct);
+  const rights = S.tally.filter(Boolean).length, wrongs = S.tally.length - rights;
+  let decided = null;
+  if (rights >= 2) decided = "pass"; else if (wrongs >= 2) decided = "fail";
+  if (decided === "pass"){ S.results[s.id] = {gap: S.level === 3 ? null : S.level + 1}; S.si++; S.level = 3; S.tally = []; }
+  else if (decided === "fail"){
+    if (S.level === 1){ S.results[s.id] = {gap:1}; S.si++; S.level = 3; } else S.level--;
+    S.tally = [];
+  }
+  if (S.si >= STRANDS.length){ S.phase = "map"; S.cur = null; }
+  else S.cur = gen(STRANDS[S.si].id + S.level);
+  const ack = $("#ack"); if (ack) ack.textContent = "Got it.";
+  setTimeout(go, 240);
+}
+
+function checkFix(){
+  const o = picked >= 0 ? F.item.opts[picked] : null, ok = !!(o && o.ok);
+  F.last = {correct:ok, tag:o ? o.tag : null}; F.tries++; if (ok) F.right++;
+  F.outcome = null;
+  if (!F.payoff){
+    if (F.right >= 2){
+      if (F.gap === 3){ F.outcome = "fixed"; }
+      else { F.payoff = true; F.right = 0; F.tries = 0; }
+    } else if (F.tries >= 4) F.outcome = "stop";
+  } else {
+    if (ok) F.outcome = "fixed"; else if (F.tries >= 2) F.outcome = "stop";
+  }
+  if (F.outcome === "fixed"){ S.fixed[F.sid] = new Date().toISOString().slice(0, 10); save(); }
+  F.step = "result"; render(); scrollTo(0, 0);
+}
+
+async function closerRead(){
+  if (!sample && !API_URL) return;
+  readState = {status:"loading"}; render();
+  const items = S.log.filter(l => !l.correct && l.note).map(l => ({question:l.q, correct_answer:l.a, student_answer:l.chosen, student_explanation:l.note}));
+  try{
+    let out;
+    if (sample){
+      out = await sample.json(buildPrompt(items), {modelTier:"default"});
+    } else {
+      const res = await fetch(API_URL, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({items})});
+      if (res.status === 429) throw {code:"rate_limited"};
+      if (!res.ok) throw new Error("http " + res.status);
+      out = await res.json();
+    }
+    if (!out || !Array.isArray(out.reads)) throw new Error("shape");
+    readState = {status:"done", data:out};
+  }catch(err){
+    if (err && err.code === "not_granted"){ sample = null; readState = {status:"idle"}; }
+    else readState = {status:"error", err:(err && err.code === "rate_limited") ? "Too many requests just now. Try again in a minute." : "Something went wrong. Try again later."};
+  }
+  render();
+}
+function buildPrompt(items){
+  return `You are helping a 9th-grade student who fell behind in math find which concept never clicked. Below are questions they got wrong, with the answer they picked and their own explanation of how they got it.
+
+For each item, write one or two short sentences in plain, friendly language addressed to the student ("you") that name the specific rule or idea they seem to be using and what the correct idea is. Be concrete and kind, never judgmental, no exclamation marks, no praise padding. Don't solve the whole problem step by step.
+Then write a one-sentence summary of the single most important idea to fix first.
+
+Return ONLY JSON in this shape, no other text:
+{"summary": "...", "reads": [{"question": "<the question text>", "read": "..."}]}
+
+Items:
+${JSON.stringify(items, null, 2)}`;
+}
+
+if (S.phase === "fix" || (S.phase === "quiz" && !S.cur)) S.phase = Object.keys(S.results).length ? "map" : "intro";
+render();
+</script>
+</body>
+</html>
