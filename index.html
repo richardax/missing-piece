@@ -61,6 +61,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .progress i.done{background:var(--ink)}
 .progress i.now{background:var(--hi)}
 .qtopic{color:var(--pencil);font-size:.92rem;margin-bottom:.35rem}
+.passage{background:var(--surface);border:2px solid var(--line);border-left:5px solid var(--hi);border-radius:.8rem;padding:.9rem 1rem;margin:0 0 1rem;white-space:pre-line;line-height:1.6}
 .qtext{font-family:var(--display);font-weight:600;font-size:1.45rem;line-height:1.25;margin:0 0 1.25rem}
 .qtext .math{white-space:nowrap}
 .opts{display:grid;gap:.6rem;margin-bottom:1rem}
@@ -128,14 +129,14 @@ textarea{width:100%;min-height:5rem;padding:.75rem;border-radius:.8rem;border:2p
 const API_URL = "";
 
 /* ---------- topics ---------- */
-const STRANDS = [
+const MATH_STRANDS = [
   {id:"A", name:"Equations", levels:["The equals sign","Two-step equations","x on both sides"]},
   {id:"B", name:"Fractions", levels:["Adding related fractions","Comparing fractions","Different denominators"]},
   {id:"C", name:"Ratios", levels:["Per-one rates","Unit pricing","Scaling up"]},
   {id:"D", name:"Negative numbers", levels:["The number line","Subtracting negatives","Negatives & brackets"]},
   {id:"E", name:"Letters & expressions", levels:["Like terms","Plugging in values","Brackets + like terms"]},
 ];
-const FOUNDATION = ["B","D","A","E","C"];
+const MATH_FOUNDATION = ["B","D","A","E","C"];
 
 /* ---------- number helpers ---------- */
 const R = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
@@ -461,12 +462,12 @@ const DOG = {
       `${k}(${price}) + ${j}x = ${lin(k + j, k * m * sign)}`);
   },
 };
-function genFor(id, ctx){
+function mathGenFor(id, ctx){
   const src = ctx === "dogs" && DOG[id] ? DOG : G;
   for (let i = 0; i < 2000; i++){ const p = src[id](); if (p) return p; }
   throw new Error("generator " + id);
 }
-const DOG_EX = {
+const MATH_DOG_EX = {
   EQUALS_ANSWER:"Max (12 lb) + Bella (9 lb) balance Rocky + a 5 lb crate.\nLeft side: 21 lb. So Rocky + 5 = 21 → Rocky = 16 lb.",
   SIGN_MOVE:"Puppy's weight w plus 4 lb gained = 19 lb.\nTake 4 off both sides: w = 15 lb.",
   INVERSE_OPS:"$8 per walk + $6 fee = $46 total.\nUndo the fee: 8w = 40. Undo the ×8: w = 5 walks.",
@@ -484,7 +485,7 @@ const DOG_EX = {
   VARIABLE_MEANING:"w = price of one walk.\n3w means 3 walks: 3 × w. If w = 12, then 3w + 5 = 41.",
 };
 
-const LESSON = {
+const MATH_LESSON = {
   EQUALS_ANSWER:{name:"The equals sign", rule:"“=” means “now write the answer.”", idea:"“=” means both sides are worth the same amount. It's a balance, not an arrow.", ex:"8 + 4 = ☐ + 5\nLeft side is 12, so the right side must be 12 too. ☐ = 7."},
   SIGN_MOVE:{name:"Moving things across the =", rule:"Move a number to the other side and keep its sign.", idea:"Nothing actually moves. You do the same thing to both sides. To get rid of +5, subtract 5 from both sides, which is why it shows up as −5.", ex:"x + 5 = 2\nx + 5 − 5 = 2 − 5\nx = −3"},
   INVERSE_OPS:{name:"Undoing steps", rule:"Undo with the same operation, or stop after one step.", idea:"Undo each step with its opposite: + or − first, then × or ÷. Keep going until x is alone.", ex:"4x − 6 = 18\nAdd 6: 4x = 24\nDivide by 4: x = 6"},
@@ -501,14 +502,177 @@ const LESSON = {
   COMBINE_UNLIKE:{name:"Like terms", rule:"Add everything together, letters and plain numbers.", idea:"x-terms combine with x-terms, plain numbers with plain numbers. 6 apples + 6 dollars isn't 12 of anything.", ex:"2x + 6 + 4x\n= (2x + 4x) + 6\n= 6x + 6"},
   VARIABLE_MEANING:{name:"What a letter means", rule:"3n means 3 written next to n (like 34), or 3 + n.", idea:"A letter stands for a number. 3n means 3 × n. And 5a + 2a is just 5 of something plus 2 more of the same thing.", ex:"n = 4\n3n + 2 = 3 × 4 + 2 = 14\n5a + 2a = 7a"},
 };
-const DEFAULT_TAG = {A1:"EQUALS_ANSWER",A2:"INVERSE_OPS",A3:"SIGN_MOVE",B1:"ADD_ACROSS",B2:"WHOLE_NUMBER_FRAC",B3:"NO_SCALE",C1:"UNIT_RATE",C2:"UNIT_RATE",C3:"ADDITIVE_RATIO",D1:"NEG_ORDER",D2:"NEG_SUBTRACT",D3:"DISTRIB_PARTIAL",E1:"VARIABLE_MEANING",E2:"VARIABLE_MEANING",E3:"COMBINE_UNLIKE"};
+const MATH_DEFAULT_TAG = {A1:"EQUALS_ANSWER",A2:"INVERSE_OPS",A3:"SIGN_MOVE",B1:"ADD_ACROSS",B2:"WHOLE_NUMBER_FRAC",B3:"NO_SCALE",C1:"UNIT_RATE",C2:"UNIT_RATE",C3:"ADDITIVE_RATIO",D1:"NEG_ORDER",D2:"NEG_SUBTRACT",D3:"DISTRIB_PARTIAL",E1:"VARIABLE_MEANING",E2:"VARIABLE_MEANING",E3:"COMBINE_UNLIKE"};
+
+/* =========================================================
+   READING (ELA) MODULE
+   Same engine as math: 5 skills × 3 levels, wrong answers tagged
+   with the reading habit that produces them. Items come from a bank
+   (reading passages can't be number-randomized), shuffled each time.
+   ========================================================= */
+const READ_STRANDS = [
+  {id:"S", name:"Sentences", levels:["Who did what","Pronouns","Sentences with turns"]},
+  {id:"V", name:"Vocabulary", levels:["Context clues","Word parts","Figurative & academic words"]},
+  {id:"M", name:"Main idea", levels:["Topic of a paragraph","Main idea vs. detail","Central idea"]},
+  {id:"I", name:"Inference", levels:["Simple clues","Feelings & motives","Tone & hidden meaning"]},
+  {id:"E", name:"Evidence & argument", levels:["Fact vs. opinion","Supporting a claim","Judging an argument"]},
+];
+const READ_FOUNDATION = ["S","V","M","I","E"];
+
+const T = (dog, p, q, a, d, s) => ({dog, p, q, a, d, s});
+const READ = {
+  V1:[
+    T(true,"Bruno was so lethargic after his surgery that he barely lifted his head when we called his name.","What does “lethargic” mean?","Tired and slow",[["Excited and loud","CONTEXT_CLUE_MISS"],["Allergic","CONTEXT_CLUE_MISS"],["Hungry","NOT_IN_TEXT"]],"He “barely lifted his head”: that's the clue. Lethargic means low on energy."),
+    T(true,"The puppy was timid around strangers; she hid behind my legs whenever someone new came over.","What does “timid” mean?","Shy and nervous",[["Brave","CONTEXT_CLUE_MISS"],["Small","NOT_IN_TEXT"],["Rude","CONTEXT_CLUE_MISS"]],"Hiding behind someone's legs shows fear. Puppies are small, but the sentence doesn't use that as the clue."),
+    T(false,"The old bridge was so precarious that the town closed it; one more storm could make it collapse.","What does “precarious” mean?","Unsafe, likely to fall",[["Very old","KEYWORD_MATCH"],["Expensive","NOT_IN_TEXT"],["Popular","CONTEXT_CLUE_MISS"]],"“Could make it collapse” is the clue. “Old” is in the sentence, but it's a different word."),
+    T(false,"Unlike her talkative brother, Mia was reticent and rarely shared her thoughts in class.","What does “reticent” mean?","Quiet, holding back",[["Talkative","CONTEXT_CLUE_MISS"],["Smart","NOT_IN_TEXT"],["Well rested","CONTEXT_CLUE_MISS"]],"“Unlike” signals an opposite, and “rarely shared” confirms it."),
+  ],
+  V2:[
+    T(true,"The trainer warned that Rex's reactions to other dogs were unpredictable.","What does “unpredictable” mean?","Can't be guessed ahead of time",[["Easy to guess ahead of time","WORD_PARTS"],["Happening again and again","WORD_PARTS"],["Very loud","NOT_IN_TEXT"]],"un- (not) + predict (tell before) + -able (can be): not able to be told ahead of time."),
+    T(true,"The jumping was still a problem, so the trainer told us to retrain it from the start.","What does “retrain” mean?","Train again",[["Stop training","WORD_PARTS"],["Train before","WORD_PARTS"],["Train a different dog","NOT_IN_TEXT"]],"re- means again, like redo or rewrite."),
+    T(false,"The instructions were so careless that half the steps were missing.","What does “careless” mean?","Without care",[["Full of care","WORD_PARTS"],["Too short","NOT_IN_TEXT"],["Very careful","WORD_PARTS"]],"-less means without, like hopeless or fearless."),
+    T(false,"The scientist used a microscope to examine the cells.","What is a “microscope”?","A tool for looking at very small things",[["A tool for looking at faraway things","WORD_PARTS"],["A tool for recording sound","WORD_PARTS"],["A kind of computer","NOT_IN_TEXT"]],"micro = small, scope = look at. (Tele-scope is for far away.)"),
+  ],
+  V3:[
+    T(true,"When the vet said Cooper's tests came back clear, a weight lifted off Mom's shoulders.","What does the last part mean?","Mom felt relieved",[["Mom put down something heavy","LITERAL_ONLY"],["Mom lost weight","LITERAL_ONLY"],["Mom felt tired","OVER_INFER"]],"It's an expression: worry feels like a weight, so losing the worry feels like the weight lifting."),
+    T(true,"The shelter's adoption numbers fluctuated all year: up in spring, down in winter, up again in summer.","What does “fluctuated” mean?","Went up and down",[["Grew steadily","CONTEXT_CLUE_MISS"],["Stayed the same","CONTEXT_CLUE_MISS"],["Were written down","NOT_IN_TEXT"]],"The colon introduces the explanation: up, down, up again."),
+    T(false,"My little brother's room is a disaster zone.","What does the writer mean?","The room is extremely messy",[["Something dangerous happened there","LITERAL_ONLY"],["The room is being repaired","NOT_IN_TEXT"],["The brother is a bad person","OVER_INFER"]],"It's an exaggeration for effect, not a real disaster."),
+    T(false,"The new rule had an unexpected consequence: students started arriving later, not earlier.","What does “consequence” mean here?","A result",[["A punishment","CONTEXT_CLUE_MISS"],["A rule","KEYWORD_MATCH"],["A schedule","NOT_IN_TEXT"]],"In everyday talk “consequence” often means punishment, but here the rule caused a result."),
+  ],
+  S1:[
+    T(true,"Max chased the cat that had stolen Bella's toy.","Who stole the toy?","The cat",[["Max","CLAUSE_MISS"],["Bella","KEYWORD_MATCH"],["Nobody; it was lost","NOT_IN_TEXT"]],"“That had stolen” describes the cat, the word right before it."),
+    T(true,"The dog that the neighbors adopted from the shelter barked at the mail carrier.","Who barked?","The dog",[["The neighbors","CLAUSE_MISS"],["The mail carrier","CLAUSE_MISS"],["The shelter workers","NOT_IN_TEXT"]],"Strip out the middle part (“that the neighbors adopted…”): The dog barked at the mail carrier."),
+    T(false,"The coach that the players admired most retired after the season.","Who retired?","The coach",[["The players","CLAUSE_MISS"],["The players' parents","NOT_IN_TEXT"]],"Remove “that the players admired most”: The coach retired."),
+    T(false,"Before Jordan left for practice, his sister finished the essay he had started.","Who finished the essay?","His sister",[["Jordan","CLAUSE_MISS"],["The coach","NOT_IN_TEXT"]],"Jordan started it; his sister finished it. The main action is in the second half."),
+  ],
+  S2:[
+    T(true,"Bella dropped the ball at Mom's feet, but she was too busy on the phone to throw it.","Who was too busy?","Mom",[["Bella","PRONOUN_MIX"],["Someone on the other end of the phone","NOT_IN_TEXT"]],"Dogs don't talk on the phone, so “she” must be Mom."),
+    T(true,"When the puppies saw the older dogs eating, they started whining for food.","Who started whining?","The puppies",[["The older dogs","PRONOUN_MIX"],["The owners","NOT_IN_TEXT"]],"The older dogs were already eating, so they wouldn't whine for food. “They” is the puppies, even though “dogs” is closer."),
+    T(false,"The teacher returned the tests to the students after she graded them.","What does “them” refer to?","The tests",[["The students","PRONOUN_MIX"],["The grades","KEYWORD_MATCH"]],"You grade tests, not students. Ask which noun makes sense."),
+    T(false,"Liam's grandfather gave him a watch when he turned sixteen.","Who turned sixteen?","Liam",[["The grandfather","PRONOUN_MIX"],["The watch","PRONOUN_MIX"]],"“Him” and “he” both point to Liam; a grandfather isn't turning sixteen."),
+  ],
+  S3:[
+    T(true,"Although Daisy is afraid of thunder, she sleeps calmly through fireworks.","What does this tell you about Daisy?","Thunder scares her, but fireworks don't",[["Thunder and fireworks both scare her","CLAUSE_MISS"],["Thunder doesn't scare her","CLAUSE_MISS"],["She sleeps a lot","KEYWORD_MATCH"]],"“Although” sets up a contrast: afraid of one, calm about the other."),
+    T(true,"Unless the weather clears up by noon, the dog park cleanup will move to Sunday.","If it's still raining at noon, when is the cleanup?","Sunday",[["Today at noon","CLAUSE_MISS"],["It's canceled for good","NOT_IN_TEXT"]],"“Unless it clears” means: if it doesn't clear, it moves to Sunday."),
+    T(false,"Despite studying for hours, Ana still struggled with the last section of the test.","What happened?","She studied a lot, but the last part was still hard",[["She didn't study, so the test was hard","CLAUSE_MISS"],["The whole test was easy for her","CLAUSE_MISS"],["She failed the test","OVER_INFER"]],"“Despite” means the studying didn't prevent the struggle."),
+    T(false,"The museum, which usually closes at five, stayed open until nine on Friday.","When did the museum close on Friday?","At nine",[["At five","CLAUSE_MISS"],["It didn't open","NOT_IN_TEXT"]],"The part between commas is background (usually). The main sentence says: stayed open until nine."),
+  ],
+  M1:[
+    T(true,"Greyhounds can run up to 45 miles per hour. Their long legs and flexible spine let them cover a lot of ground with each stride. They were bred for racing and hunting.","What is this paragraph mostly about?","How fast greyhounds are, and why",[["Greyhounds' long legs","DETAIL_NOT_MAIN"],["Dogs in general","TOO_BROAD"],["Why dog racing is cruel","NOT_IN_TEXT"]],"Every sentence connects to greyhound speed. The legs are one detail."),
+    T(true,"Puppies need a lot of sleep, sometimes 18 to 20 hours a day. Sleep helps their brains and bodies grow. A tired puppy that skips naps can become cranky and bite more.","What is this paragraph mostly about?","Why puppies need so much sleep",[["Puppies bite","DETAIL_NOT_MAIN"],["Taking care of pets","TOO_BROAD"],["How to train a puppy not to bite","NOT_IN_TEXT"]],"Biting comes up as a result of missing sleep; sleep is the topic."),
+    T(false,"Honeybees communicate with a “waggle dance.” The direction of the dance shows where flowers are, and its length shows how far away they are. Other bees watch and then fly to the food.","What is this paragraph mostly about?","How bees dance to share where food is",[["Bees fly long distances","DETAIL_NOT_MAIN"],["Insects","TOO_BROAD"],["How bees make honey","NOT_IN_TEXT"]],"Each sentence explains the dance and what it communicates."),
+    T(false,"Many teens don't get enough sleep. School starts early, homework runs late, and phones keep them up. Doctors say teens need 8 to 10 hours, but most get about 7.","What is this paragraph mostly about?","Teens often don't get the sleep they need",[["Phones keep teens up","DETAIL_NOT_MAIN"],["Health","TOO_BROAD"],["Schools should start later","NOT_IN_TEXT"]],"Phones are one reason. The paragraph never argues schools should change."),
+  ],
+  M2:[
+    T(true,"Some people think big dogs need big houses. But a Great Dane mostly lies on the couch, while a small terrier may race around all day. A dog's energy level matters more than its size when choosing a home for it.","What is the main idea?","A dog's energy matters more than its size when choosing a home",[["Great Danes mostly lie on the couch","DETAIL_NOT_MAIN"],["Big dogs need big houses","KEYWORD_MATCH"],["Terriers are the best apartment dogs","NOT_IN_TEXT"]],"The first sentence is the view the writer disagrees with. The main idea comes last."),
+    T(true,"Shelters now post adoptable dogs on social media. Short videos let people see a dog's personality. One shelter doubled its adoptions in a year after posting daily videos. Online posts have become one of the most powerful tools shelters have.","What is the main idea?","Social media has become a powerful tool for shelters",[["One shelter doubled its adoptions","DETAIL_NOT_MAIN"],["The internet has changed the world","TOO_BROAD"],["Shelters have too many dogs","NOT_IN_TEXT"]],"The doubled adoptions are evidence for the bigger point in the last sentence."),
+    T(false,"In 1900, most people never traveled more than 50 miles from home. Cars, then airplanes, changed that. Today a person can cross an ocean in a day. Transportation has completely changed how far people can go.","What is the main idea?","Transportation has greatly changed how far people can travel",[["Airplanes can cross an ocean in a day","DETAIL_NOT_MAIN"],["Life in 1900","TOO_BROAD"],["Cars are bad for the environment","NOT_IN_TEXT"]],"The ocean crossing is one example. The last sentence sums it up."),
+    T(false,"Some students think music distracts them, but studies show calm instrumental music can help focus. Songs with lyrics, however, often pull attention away from reading. The type of music makes the difference.","What is the main idea?","Whether music helps studying depends on the type",[["Songs with lyrics are distracting","DETAIL_NOT_MAIN"],["Music distracts students","KEYWORD_MATCH"],["Everyone should study in silence","NOT_IN_TEXT"]],"Both kinds of music are covered, and the last sentence ties them together."),
+  ],
+  M3:[
+    T(true,"When Rosa adopted Pepper, he was terrified of everything: cars, men in hats, even the vacuum. She spent months on short, calm training sessions, rewarding every small step.\n\nA year later, Pepper rides in the car with his head out the window and greets visitors at the door. Rosa says the change didn't come from one big breakthrough but from hundreds of tiny ones.","What is the central idea of the passage?","Patience and small steps can transform a fearful dog",[["Pepper was afraid of the vacuum","DETAIL_NOT_MAIN"],["Dogs love car rides","KEYWORD_MATCH"],["All shelter dogs are fearful","NOT_IN_TEXT"]],"Both paragraphs build toward Rosa's point about many tiny steps."),
+    T(true,"Sled dogs in Alaska run over 1,000 miles in the Iditarod race. They eat high-fat food and wear booties to protect their paws.\n\nBut the race began as something else. In 1925, teams of sled dogs carried medicine across Alaska to stop a disease outbreak in the town of Nome. Today's race honors that run.","What is the central idea of the passage?","The Iditarod honors a real life-saving sled dog journey",[["Sled dogs wear booties","DETAIL_NOT_MAIN"],["Dogs are heroes","TOO_BROAD"],["Alaska is very cold","NOT_IN_TEXT"]],"The second paragraph explains why the race exists. That connects the whole passage."),
+    T(false,"For years, the town park was full of trash, and families stopped going. A group of teenagers decided to do something. They organized weekend cleanups and asked local stores to donate trash cans.\n\nWithin a year the park hosted concerts again. The mayor said the town owed the change to a few kids who refused to wait for someone else to fix it.","What is the central idea of the passage?","A few determined teens can change their community",[["Stores donated trash cans","DETAIL_NOT_MAIN"],["Parks need more trash cans","KEYWORD_MATCH"],["Mayors should listen to kids more","NOT_IN_TEXT"]],"The mayor's last line states the big idea directly."),
+    T(false,"Video games are often blamed for wasting time. But some research shows certain games improve problem-solving and quick decision-making.\n\nIn one study, surgeons who played action games made fewer mistakes in practice operations. Still, the researchers warned that hours of play can crowd out sleep and exercise.","What is the central idea of the passage?","Some games build useful skills, but too much play has costs",[["Surgeons made fewer mistakes","DETAIL_NOT_MAIN"],["Video games waste time","KEYWORD_MATCH"],["Everyone should play action games","NOT_IN_TEXT"]],"The passage weighs both sides: benefits, then a warning."),
+  ],
+  I1:[
+    T(true,"Rocky heard the jingle of keys, ran to the door, and spun in circles with his leash in his mouth.","What does Rocky think is about to happen?","He's going for a walk",[["He's going to the vet","OVER_INFER"],["He wants to play with the keys","LITERAL_ONLY"],["He's hungry","NOT_IN_TEXT"]],"Keys + door + leash + excitement all point the same way."),
+    T(true,"When Mom came home, the couch cushion was torn open and Biscuit was hiding under the bed, ears flat.","What most likely happened?","Biscuit tore the cushion and knows he's in trouble",[["Biscuit is sick","OVER_INFER"],["Someone broke into the house","OVER_INFER"],["Biscuit just likes sleeping under the bed","LITERAL_ONLY"]],"Torn cushion + hiding + flat ears: the strongest explanation uses all the clues."),
+    T(false,"Jamal looked at the dark clouds, grabbed his umbrella, and ran for the bus.","What does Jamal expect?","Rain",[["The bus will be late","NOT_IN_TEXT"],["Snow","OVER_INFER"],["Nothing; he just likes umbrellas","LITERAL_ONLY"]],"Dark clouds + umbrella point to rain."),
+    T(false,"The cafeteria went silent. Every student stared at the tray on the floor and the spaghetti all over Ms. Lee's shoes.","What most likely happened?","Someone dropped a tray of spaghetti on Ms. Lee's shoes",[["There was a fire drill","NOT_IN_TEXT"],["Ms. Lee cooked spaghetti for lunch","OVER_INFER"],["The students were taking a quiet test","LITERAL_ONLY"]],"The tray on the floor and the spaghetti on her shoes tell the story."),
+  ],
+  I2:[
+    T(true,"Emma checked the shelter's website every morning for two weeks. When Luna's photo finally said “Adoption pending: Emma R.,” she took a screenshot and sent it to everyone she knew.","How does Emma feel?","Thrilled",[["Nervous","OVER_INFER"],["Bored","LITERAL_ONLY"],["Annoyed with the website","KEYWORD_MATCH"]],"Waiting for weeks, then telling everyone: that's excitement."),
+    T(true,"Ty volunteered to walk the shelter dog nobody else would take: an old, half-blind pit bull named Moose. Every Saturday he showed up early so Moose wouldn't have to wait.","Why does Ty show up early?","He cares about Moose",[["He wants a reward","NOT_IN_TEXT"],["The shelter makes him","NOT_IN_TEXT"],["He just likes Saturdays","LITERAL_ONLY"]],"“So Moose wouldn't have to wait” gives his reason."),
+    T(false,"Priya practiced her speech in front of the mirror twenty times, then rewrote the ending at midnight.","How does Priya feel about the speech?","She really wants it to go well",[["She doesn't care about it","OVER_INFER"],["She thinks it's already perfect","OVER_INFER"],["She just likes mirrors","LITERAL_ONLY"]],"Twenty practices and a midnight rewrite show how much it matters to her."),
+    T(false,"Marcus told everyone the tryouts didn't matter to him, but he stayed up refreshing the team list until 2 a.m.","What does this suggest?","Marcus cares more than he admits",[["Marcus really doesn't care","LITERAL_ONLY"],["Marcus couldn't sleep because of noise","NOT_IN_TEXT"]],"What people do can reveal more than what they say."),
+  ],
+  I3:[
+    T(true,"“Oh, great,” Dad said, looking at the muddy paw prints across his freshly mopped floor. “Just what I wanted.”","What does Dad really mean?","He's annoyed about the mess",[["He's happy about the paw prints","LITERAL_ONLY"],["He wants a new mop","OVER_INFER"]],"He says the opposite of what he means. That's sarcasm."),
+    T(true,"The ad said the puppy was “full of personality.” Within an hour he had eaten a shoe, two socks, and part of the doormat.","What is the writer suggesting?","“Full of personality” was a polite way of saying he's a handful",[["The ad was accurate and he's calm","LITERAL_ONLY"],["The puppy was hungry because nobody fed him","OVER_INFER"]],"The list of chewed things shows what the ad's nice phrase was hiding."),
+    T(false,"The teacher looked at the class, half asleep after lunch. “I can see you're all bursting with energy today.”","What is the teacher's tone?","Sarcastic",[["Excited","LITERAL_ONLY"],["Angry","OVER_INFER"],["Sad","NOT_IN_TEXT"]],"The class is half asleep, so “bursting with energy” means the opposite."),
+    T(false,"After losing 0–7, the coach told reporters, “Well, at least the weather was nice.”","What does the coach's comment suggest?","There was nothing good to say about the game",[["He cares more about weather than the game","LITERAL_ONLY"],["He thinks the team played well","OVER_INFER"]],"Mentioning the weather is a way of avoiding the game itself."),
+  ],
+  E1:[
+    T(true,"","Which statement is an opinion?","Golden retrievers are the best family dogs.",[["Golden retrievers were first bred in Scotland.","OPINION_FACT"],["Most golden retrievers weigh 55 to 75 pounds.","OPINION_FACT"]],"“The best” is a judgment. The other two can be checked."),
+    T(true,"","Which statement is a fact?","Dogs have about 300 million smell receptors; people have about 6 million.",[["Dogs are much more interesting than cats.","OPINION_FACT"],["Every family should own a dog.","OPINION_FACT"]],"Numbers like these can be checked. “More interesting” and “should” are judgments."),
+    T(false,"","Which statement is an opinion?","Summer is the most fun season.",[["In the US, summer starts around June 21.","OPINION_FACT"],["Days are longer in summer than in winter.","OPINION_FACT"]],"“Most fun” depends on the person."),
+    T(false,"","Which statement is a fact?","The school day at Lincoln High starts at 7:45 a.m.",[["Lincoln High starts way too early.","OPINION_FACT"],["Students would do better if school started later.","OPINION_FACT"]],"A start time can be checked. “Too early” and “would do better” are claims or judgments."),
+  ],
+  E2:[
+    T(true,"Claim: Adopting from a shelter is a good choice for families.","Which detail best supports the claim?","Shelter dogs are often already vaccinated and house-trained.",[["Many shelters are run by volunteers.","WEAK_EVIDENCE"],["Shelters are usually open on weekends.","WEAK_EVIDENCE"],["Families love dogs.","WEAK_EVIDENCE"]],"Only this one gives a reason why adopting is a good choice for a family."),
+    T(true,"Claim: Daily walks improve a dog's behavior.","Which detail best supports the claim?","In a study, dogs walked daily chewed and barked less than dogs that weren't.",[["Many dogs enjoy going for walks.","WEAK_EVIDENCE"],["Leashes come in many colors and lengths.","WEAK_EVIDENCE"]],"It's about walks AND behavior, with a comparison. Enjoying walks isn't the same as behaving better."),
+    T(false,"Claim: The school should add more water fountains.","Which detail best supports the claim?","Students currently wait in lines of 10+ at the only fountain after gym.",[["Water is important for health.","WEAK_EVIDENCE"],["The cafeteria sells juice.","WEAK_EVIDENCE"]],"It shows the specific problem more fountains would fix. “Water is healthy” is true but doesn't show a need for more fountains."),
+    T(false,"Claim: Reading for fun helps students do better in school.","Which detail best supports the claim?","In a large study, students who read for fun daily scored higher on reading and math tests.",[["Libraries have thousands of books.","WEAK_EVIDENCE"],["Some students prefer graphic novels.","WEAK_EVIDENCE"]],"It connects reading for fun to school results, which is what the claim says."),
+  ],
+  E3:[
+    T(true,"Jake argues: “A dog of that breed bit my friend once, so all dogs of that breed are dangerous and should be banned.”","What is the biggest problem with Jake's argument?","He judges a whole breed from one example",[["He doesn't name the breed","WEAK_EVIDENCE"],["Dogs never bite people","NOT_IN_TEXT"]],"One case can't prove something about every dog of a breed."),
+    T(true,"An ad says: “Vets recommend PawPerfect food!” In small print: based on a survey of 3 vets.","Why should a reader be skeptical?","Three vets is far too few to show what vets recommend",[["The food has a catchy name","WEAK_EVIDENCE"],["Vets don't know anything about food","NOT_IN_TEXT"]],"The claim sounds big, but the evidence behind it is tiny."),
+    T(false,"Maya argues: “We should get rid of homework, because I don't like doing it.”","What is weak about this argument?","Her only reason is her personal feeling",[["She doesn't say which subjects","WEAK_EVIDENCE"],["Homework is required by law","NOT_IN_TEXT"]],"Not liking something isn't evidence that it should be removed for everyone."),
+    T(false,"An article argues phones should be banned in class. It cites a school where test scores rose after a ban. Critics point out the same school also hired several new teachers that year.","Why does the critics' point matter?","Scores might have risen because of the new teachers, not the ban",[["New teachers don't like phones","OVER_INFER"],["The article is too short","WEAK_EVIDENCE"]],"When two things change at once, you can't be sure which one caused the result."),
+  ],
+};
+const READ_LESSON = {
+  KEYWORD_MATCH:{name:"Matching meaning, not words", rule:"Pick the answer that repeats words from the text.", idea:"Wrong answers often reuse words from the passage to look right. Ask whether the answer means what the text means.", ex:"Text: “The old bridge was so unsafe it was closed.”\n“Very old” uses a word from the text, but “precarious” means unsafe."},
+  NOT_IN_TEXT:{name:"Is it actually in the text?", rule:"If it's true in real life, it's a good answer.", idea:"The answer has to be backed by the passage. Try to point to the sentence that proves it. If you can't, it's not the answer.", ex:"Text: “The puppy hid behind my legs around strangers.”\n“Small” is true of puppies, but the text points to shy."},
+  DETAIL_NOT_MAIN:{name:"Main idea vs. detail", rule:"An interesting fact from the passage is the main idea.", idea:"The main idea is what all the sentences have in common. A detail is one piece that supports it.", ex:"Three sentences about bee dances.\nMain idea: how bees share where food is.\nDetail: bees fly long distances."},
+  TOO_BROAD:{name:"Too big to be the main idea", rule:"The biggest, most general answer must be right.", idea:"The main idea is about THIS passage. If an answer could describe a whole book (“insects,” “health”), it's too broad.", ex:"Paragraph about bee dances.\n“Insects” is too broad.\n“How bees dance to share food” fits."},
+  LITERAL_ONLY:{name:"Reading between the lines", rule:"Only what's said directly counts.", idea:"Writers show more than they say. Clues plus what you know make an inference. Sarcasm and expressions mean something different from the exact words.", ex:"“Oh great, just what I wanted,” looking at a mess.\nThe words say happy; the situation says annoyed."},
+  OVER_INFER:{name:"Going too far", rule:"Any guess that could be true is fine.", idea:"A good inference is the one ALL the clues point to most strongly, not just something that's possible.", ex:"Dark clouds + umbrella.\nRain: strongly supported.\nSnow: possible, but nothing points to it."},
+  CONTEXT_CLUE_MISS:{name:"Context clues", rule:"Guess from what the word looks or sounds like, or its everyday meaning.", idea:"The words around it give the meaning away. Look for examples, opposites (unlike, but), or a restatement after a colon or semicolon.", ex:"“Unlike her talkative brother, Mia was reticent.”\n“Unlike” → opposite of talkative → quiet."},
+  WORD_PARTS:{name:"Word parts", rule:"Ignore the beginning and end of the word.", idea:"Prefixes and suffixes change the meaning: un-/in- = not, re- = again, pre- = before, -less = without, -able = can be.", ex:"un + predict + able\n= not + tell before + can be\n= can't be told ahead of time"},
+  PRONOUN_MIX:{name:"Who is “she,” “it,” or “they”?", rule:"A pronoun means the nearest noun.", idea:"A pronoun points to whatever makes sense in the sentence, which isn't always the closest word. Try swapping each option in.", ex:"“The teacher returned the tests after she graded them.”\nGraded the students? No. Graded the tests? Yes."},
+  CLAUSE_MISS:{name:"Long sentences with turns", rule:"The first noun does the action, and the first part is the main point.", idea:"Cross out the extra parts (that…, which…, between commas) to find who did what. Watch the turn words: although, despite, unless, but.", ex:"“The dog that the neighbors adopted barked.”\nCross out “that the neighbors adopted”:\nThe dog barked."},
+  OPINION_FACT:{name:"Fact or opinion", rule:"A confident-sounding statement is a fact.", idea:"A fact can be checked. An opinion is a judgment, often with words like best, worst, should, too, interesting.", ex:"Fact: School starts at 7:45.\nOpinion: School starts way too early."},
+  WEAK_EVIDENCE:{name:"Evidence that actually proves it", rule:"Any detail on the same topic supports the claim.", idea:"Good evidence makes the claim more convincing. Being about the same subject isn't enough; it has to show the claim is true.", ex:"Claim: We need more fountains.\nWeak: Water is healthy.\nStrong: 10+ students wait in line at the only one."},
+};
+const READ_DOG_EX = {
+  KEYWORD_MATCH:"“Some think big dogs need big houses. But energy matters more than size.”\n“Big dogs need big houses” copies the words, but it's the view the writer rejects.",
+  NOT_IN_TEXT:"“Biscuit hid under the bed, ears flat, next to a torn cushion.”\n“Biscuit is tired” might be true, but nothing in the text points to it.",
+  DETAIL_NOT_MAIN:"Paragraph: greyhounds run 45 mph, have long legs, were bred for racing.\nMain idea: greyhound speed. Detail: long legs.",
+  TOO_BROAD:"Paragraph about why puppies sleep so much.\n“Taking care of pets” is too broad. “Why puppies need sleep” fits.",
+  LITERAL_ONLY:"“A weight lifted off Mom's shoulders” when the vet says the tests are clear.\nShe didn't put anything down; she felt relieved.",
+  OVER_INFER:"Keys jingle, leash in mouth, dog spins at the door.\nWalk: every clue points there. Vet: possible, but no clue says so.",
+  CONTEXT_CLUE_MISS:"“The puppy was timid; she hid behind my legs.”\nHiding behind legs → timid means shy.",
+  WORD_PARTS:"“Retrain the jumping.”\nre- = again → train again.",
+  PRONOUN_MIX:"“Bella dropped the ball at Mom's feet, but she was busy on the phone.”\nDogs don't talk on phones → “she” is Mom.",
+  CLAUSE_MISS:"“The cat that Max chased stole the toy.”\nCross out “that Max chased”: the cat stole the toy.",
+  OPINION_FACT:"Fact: Dogs have about 300 million smell receptors.\nOpinion: Dogs are better than cats.",
+  WEAK_EVIDENCE:"Claim: Daily walks improve behavior.\nWeak: Dogs enjoy walks.\nStrong: Walked dogs barked and chewed less.",
+};
+const READ_DEFAULT_TAG = {S1:"CLAUSE_MISS",S2:"PRONOUN_MIX",S3:"CLAUSE_MISS",V1:"CONTEXT_CLUE_MISS",V2:"WORD_PARTS",V3:"LITERAL_ONLY",M1:"DETAIL_NOT_MAIN",M2:"DETAIL_NOT_MAIN",M3:"DETAIL_NOT_MAIN",I1:"LITERAL_ONLY",I2:"LITERAL_ONLY",I3:"LITERAL_ONLY",E1:"OPINION_FACT",E2:"WEAK_EVIDENCE",E3:"WEAK_EVIDENCE"};
+
+const USED = new Set();
+function readGen(id, ctx){
+  const pool = READ[id], want = it => ctx === "dogs" ? it.dog : !it.dog, key = it => id + "|" + it.q + it.p;
+  const order = [pool.filter(it => want(it) && !USED.has(key(it))), pool.filter(it => !USED.has(key(it))), pool.filter(want), pool];
+  const it = pick(order.find(l => l.length));
+  USED.add(key(it));
+  return {q:it.q, a:it.a, s:it.s, passage:it.p, opts:shuffle([{t:it.a, tag:null, ok:true}, ...it.d.map(([t, tag]) => ({t, tag, ok:false}))])};
+}
+
+/* ---------- subjects ---------- */
+const SUBJECTS = {
+  math:{label:"Math", strands:MATH_STRANDS, foundation:MATH_FOUNDATION, lesson:MATH_LESSON, dogEx:MATH_DOG_EX, defaultTag:MATH_DEFAULT_TAG, gen:mathGenFor,
+        plainLabel:"Just numbers", dogsHint:"feeding, walks, puppies, money", otherLabel:"Same idea, just numbers",
+        intro:"Math builds on itself. Miss one piece and everything after it feels harder than it should. This finds which piece.",
+        solid:"The foundations for 9th-grade algebra are in place. If class still feels hard, the gap is probably in a newer topic, not an old one."},
+  reading:{label:"Reading", strands:READ_STRANDS, foundation:READ_FOUNDATION, lesson:READ_LESSON, dogEx:READ_DOG_EX, defaultTag:READ_DEFAULT_TAG, gen:readGen,
+        plainLabel:"General topics", dogsHint:"passages about dogs, shelters, training", otherLabel:"Same idea, other topics",
+        intro:"Reading is a stack of skills: sentences, words, main ideas, reading between the lines, judging arguments. If one is shaky, everything feels harder. This finds which one.",
+        solid:"The core reading skills for 9th grade are in place. If English class still feels hard, it may be longer texts, writing, or reading speed, which this check doesn't cover yet."},
+};
+let SUBJECT = "math", STRANDS, FOUNDATION, LESSON, DEFAULT_TAG, DOG_EX;
+function useSubject(sub){ SUBJECT = sub in SUBJECTS ? sub : "math"; const c = SUBJECTS[SUBJECT]; STRANDS = c.strands; FOUNDATION = c.foundation; LESSON = c.lesson; DEFAULT_TAG = c.defaultTag; DOG_EX = c.dogEx; }
+function genFor(id, ctx){ return SUBJECTS[SUBJECT].gen(id, ctx); }
 
 /* ---------- state ---------- */
-const KEY = "missing-piece-v3";
+const KEY = "missing-piece-v4";
+try{ useSubject(localStorage.getItem(KEY + ":subject") || "math"); }catch(e){ useSubject("math"); }
 let S = load() || fresh();
 function fresh(interest){ return {interest: interest || "plain", phase:"intro", si:0, level:3, tally:[], cur:null, log:[], results:{}, fixed:{}}; }
-function load(){ try{ const r = localStorage.getItem(KEY); return r ? JSON.parse(r) : null; }catch(e){ return null; } }
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+function load(){ try{ const r = localStorage.getItem(KEY + ":" + SUBJECT); return r ? JSON.parse(r) : null; }catch(e){ return null; } }
+function save(){ try{ localStorage.setItem(KEY + ":" + SUBJECT, JSON.stringify(S)); localStorage.setItem(KEY + ":subject", SUBJECT); }catch(e){} }
 
 let sample = null, readState = {status:"idle"};
 (async () => { try{ if (window.claude && claude.use){ sample = await claude.use("sample"); render(); } }catch(e){ sample = null; } })();
@@ -549,7 +713,11 @@ function viewIntro(){
     <rect x="244" y="20" width="52" height="56" rx="10" fill="var(--line)"/>
     <g transform="translate(138 74) rotate(-14)"><rect width="50" height="50" rx="10" fill="var(--gap)" stroke="var(--ink)" stroke-width="3"/></g>
   </svg></div>
-  <p>Math builds on itself. Miss one piece and everything after it feels harder than it should. This finds which piece.</p>
+  <h3 style="margin:0 0 .6rem">What do you want to check?</h3>
+  <div class="opts" role="group" aria-label="Subject">
+    ${Object.entries(SUBJECTS).map(([k, c]) => `<button class="opt" aria-pressed="${SUBJECT === k}" data-act="subject" data-v="${k}"><span class="dot"></span><span>${c.label}</span></button>`).join("")}
+  </div>
+  <p>${SUBJECTS[SUBJECT].intro}</p>
   <ul class="promises">
     <li>New problems every time, so there's nothing to memorize.</li>
     <li>Nothing is graded and nobody else sees it.</li>
@@ -557,11 +725,12 @@ function viewIntro(){
   </ul>
   <h3 style="margin:1.5rem 0 .6rem">Pick your setting</h3>
   <div class="opts" role="group" aria-label="Setting">
-    <button class="opt" aria-pressed="${S.interest === "dogs"}" data-act="interest" data-v="dogs"><span class="dot"></span><span>🐶 Dogs <span class="small muted">— feeding, walks, puppies, money</span></span></button>
-    <button class="opt" aria-pressed="${S.interest !== "dogs"}" data-act="interest" data-v="plain"><span class="dot"></span><span>Just numbers</span></button>
+    <button class="opt" aria-pressed="${S.interest === "dogs"}" data-act="interest" data-v="dogs"><span class="dot"></span><span>🐶 Dogs <span class="small muted">— ${SUBJECTS[SUBJECT].dogsHint}</span></span></button>
+    <button class="opt" aria-pressed="${S.interest !== "dogs"}" data-act="interest" data-v="plain"><span class="dot"></span><span>${SUBJECTS[SUBJECT].plainLabel}</span></button>
   </div>
-  <p class="small muted">Same math either way. More settings coming.</p>
-  <button class="btn" data-act="start">Start</button>`;
+  <p class="small muted">Same skills either way. More settings coming.</p>
+  <button class="btn" data-act="start">${Object.keys(S.results).length ? "Start a new check" : "Start"}</button>
+  ${Object.keys(S.results).length ? `<button class="btn ghost" data-act="tomap">See your current ${SUBJECTS[SUBJECT].label.toLowerCase()} map</button>` : ""}`;
 }
 
 function viewQuiz(){
@@ -570,6 +739,7 @@ function viewQuiz(){
   return `${topbar(`<button class="linkbtn" data-act="quit">Exit</button>`)}
   <div class="progress" aria-label="Topic ${S.si + 1} of 5">${bars}</div>
   <div class="qtopic">${esc(s.name)}</div>
+  ${item.passage ? `<div class="passage">${esc(item.passage)}</div>` : ""}
   <p class="qtext">${esc(item.q)}</p>
   ${optButtons(item.opts, true)}
   <div class="note-toggle"><button class="linkbtn" data-act="note">Add how you got it (optional)</button></div>
@@ -596,7 +766,7 @@ function viewMap(){
 
   const g = nextGap(), allSolid = done && STRANDS.every(s => !S.results[s.id].gap);
   let action;
-  if (allSolid) action = `<div class="callout"><h3>All five are solid.</h3><p>The foundations for 9th-grade algebra are in place. If class still feels hard, the gap is probably in a newer topic, not an old one.</p></div>`;
+  if (allSolid) action = `<div class="callout"><h3>All five are solid.</h3><p>${SUBJECTS[SUBJECT].solid}</p></div>`;
   else if (g){ const s = strandById(g.id);
     action = `<div class="callout"><h3>Start here: ${esc(s.name)}</h3><p class="muted">${esc(s.levels[g.r.gap - 1])}. It's the most basic piece that's missing, so fixing it makes the rest easier.</p><button class="btn" data-act="fix" data-s="${g.id}">Fix this one</button></div>`; }
   else action = `<div class="callout"><h3>Every gap found today is fixed.</h3><p>Run a fresh check in a week. The problems will be new, so if it's still solid then, it's really yours.</p><button class="btn ghost" data-act="start">Run a fresh check</button></div>`;
@@ -609,8 +779,8 @@ function viewMap(){
     else { const d = readState.data;
       readBox = `<div class="callout pop"><h3>What your explanations show</h3>${d.summary ? `<p>${esc(d.summary)}</p>` : ""}<div class="reads">${(d.reads || []).map(x => `<div class="read"><b>${esc(x.question || "")}</b>${esc(x.read || "")}</div>`).join("")}</div></div>`; }
   }
-  return `${topbar(`<button class="linkbtn" data-act="restart">Start over</button>`)}
-  <h2>Your map</h2>
+  return `${topbar(`<span>${Object.keys(SUBJECTS).filter(k => k !== SUBJECT).map(k => `<button class="linkbtn" data-act="subject" data-v="${k}">Go to ${SUBJECTS[k].label}</button>`).join("")}<button class="linkbtn" data-act="restart">Start over</button></span>`)}
+  <h2>Your ${SUBJECTS[SUBJECT].label.toLowerCase()} map</h2>
   <div class="map">${rows}</div>
   <div class="legend"><span><b style="background:var(--hi)"></b>solid</span><span><b style="box-shadow:inset 0 0 0 2px var(--gap);background:var(--gap-soft)"></b>missing piece</span><span><b style="box-shadow:inset 0 0 0 2px var(--solid);background:var(--solid-soft)"></b>fixed</span><span><b style="box-shadow:inset 0 0 0 1px var(--line)"></b>not reached</span></div>
   ${action}${readBox}`;
@@ -627,13 +797,14 @@ function viewFix(){
       <div class="row wrong"><div class="lab">The rule that's been tripping you up</div>${esc(L.rule)}</div>
       <div class="row right"><div class="lab">What's actually going on</div>${esc(L.idea)}</div>
       ${F.ctx === "dogs" ? `<div class="row right"><div class="lab">With dogs</div><div class="mono" style="white-space:pre-line">${esc(DOG_EX[F.tag])}</div></div>` : ""}
-      <div class="row ex"><div class="lab">${F.ctx === "dogs" ? "Same idea, just numbers" : "Example"}</div><div class="mono" style="white-space:pre-line">${esc(L.ex)}</div></div>
+      <div class="row ex"><div class="lab">${F.ctx === "dogs" ? SUBJECTS[SUBJECT].otherLabel : "Example"}</div><div class="mono" style="white-space:pre-line">${esc(L.ex)}</div></div>
     </div>
     <button class="btn" data-act="next">Try some</button>`;
   if (F.step === "q"){
     const label = F.payoff ? (F.ctx === "dogs" ? "Same idea, no dogs" : "The 9th-grade version") : `Practice: ${F.right} of 2 right so far`;
     return `${topbar(back)}
     <div class="qtopic">${label}</div>
+    ${F.item.passage ? `<div class="passage">${esc(F.item.passage)}</div>` : ""}
     <p class="qtext">${esc(F.item.q)}</p>
     ${optButtons(F.item.opts, true)}
     <button class="btn" data-act="check" disabled>Check</button>`;
@@ -661,7 +832,8 @@ function bind(){ picked = null; document.querySelectorAll("[data-act]").forEach(
 function go(){ save(); render(); scrollTo(0, 0); }
 function onAct(e){
   const el = e.currentTarget, act = el.dataset.act;
-  if (act === "start"){ S = fresh(S.interest); readState = {status:"idle"}; S.phase = "quiz"; S.cur = genFor("A3", S.interest); go(); }
+  if (act === "start"){ S = fresh(S.interest); readState = {status:"idle"}; S.phase = "quiz"; S.cur = genFor(STRANDS[0].id + "3", S.interest); go(); }
+  else if (act === "subject"){ const interest = S.interest, keepIntro = S.phase === "intro"; save(); useSubject(el.dataset.v); S = load() || fresh(interest); if (keepIntro) S.phase = "intro"; else if (S.phase !== "intro") S.phase = Object.keys(S.results).length ? "map" : "intro"; F = null; readState = {status:"idle"}; go(); }
   else if (act === "interest"){ S.interest = el.dataset.v; save(); render(); }
   else if (act === "quit"){ S.phase = Object.keys(S.results).length ? "map" : "intro"; go(); }
   else if (act === "restart"){ if (confirm("Start a new check? Your current map will be cleared.")){ S = fresh(S.interest); readState = {status:"idle"}; go(); } }
@@ -684,7 +856,7 @@ function submitDiag(){
   const sb = $('[data-act="submit"]'); if (!sb || sb.disabled) return; sb.disabled = true;
   const s = STRANDS[S.si], item = S.cur, o = picked >= 0 ? item.opts[picked] : null;
   const correct = !!(o && o.ok);
-  S.log.push({qid:s.id + S.level, q:item.q, a:item.a, chosen:o ? o.t : "Not sure", correct, tag:o ? o.tag : null, note:($("#note") && $("#note").value.trim()) || ""});
+  S.log.push({qid:s.id + S.level, passage:item.passage || "", q:item.q, a:item.a, chosen:o ? o.t : "Not sure", correct, tag:o ? o.tag : null, note:($("#note") && $("#note").value.trim()) || ""});
   S.tally.push(correct);
   const rights = S.tally.filter(Boolean).length, wrongs = S.tally.length - rights;
   let decided = null;
@@ -719,13 +891,13 @@ function checkFix(){
 async function closerRead(){
   if (!sample && !API_URL) return;
   readState = {status:"loading"}; render();
-  const items = S.log.filter(l => !l.correct && l.note).map(l => ({question:l.q, correct_answer:l.a, student_answer:l.chosen, student_explanation:l.note}));
+  const items = S.log.filter(l => !l.correct && l.note).map(l => ({...(l.passage ? {passage:l.passage} : {}), question:l.q, correct_answer:l.a, student_answer:l.chosen, student_explanation:l.note}));
   try{
     let out;
     if (sample){
       out = await sample.json(buildPrompt(items), {modelTier:"default"});
     } else {
-      const res = await fetch(API_URL, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({items})});
+      const res = await fetch(API_URL, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({items, subject:SUBJECT})});
       if (res.status === 429) throw {code:"rate_limited"};
       if (!res.ok) throw new Error("http " + res.status);
       out = await res.json();
@@ -739,7 +911,7 @@ async function closerRead(){
   render();
 }
 function buildPrompt(items){
-  return `You are helping a 9th-grade student who fell behind in math find which concept never clicked. Below are questions they got wrong, with the answer they picked and their own explanation of how they got it.
+  return `You are helping a 9th-grade student who fell behind in ${SUBJECT === "math" ? "math" : "reading (English language arts)"} find which concept or skill never clicked. Below are questions they got wrong, with the answer they picked and their own explanation of how they got it.
 
 For each item, write one or two short sentences in plain, friendly language addressed to the student ("you") that name the specific rule or idea they seem to be using and what the correct idea is. Be concrete and kind, never judgmental, no exclamation marks, no praise padding. Don't solve the whole problem step by step.
 Then write a one-sentence summary of the single most important idea to fix first.
